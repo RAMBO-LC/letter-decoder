@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import time
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -68,15 +69,19 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS - localhost only
+# CORS - localhost by default; set CORS_ORIGINS (comma-separated) in production
+_allowed_origins = [
+    o.strip()
+    for o in os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173,"
+        "http://localhost:8000,http://127.0.0.1:8000",
+    ).split(",")
+    if o.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-    ],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -158,6 +163,7 @@ async def upload_letter(
     letter_id = uuid.uuid4().hex[:12]
     letter_samples[letter_id] = sample
     letter_queues[letter_id] = asyncio.Queue()
+    submitted_at = time.perf_counter()
 
     # Save file if provided
     file_path = None
@@ -177,7 +183,16 @@ async def upload_letter(
     letter_store[letter_id] = answer
 
     # Start background processing
-    asyncio.create_task(_process_letter(letter_id, file_path, text, country, language))
+    asyncio.create_task(
+        _process_letter(
+            letter_id,
+            file_path,
+            text,
+            country,
+            language,
+            queue_ms=int((time.perf_counter() - submitted_at) * 1000),
+        )
+    )
 
     return LetterUploadResponse(id=letter_id)
 
@@ -188,6 +203,7 @@ async def _process_letter(
     text: str | None,
     country: str,
     language: str,
+    queue_ms: int = 0,
 ):
     """Background task: run the pipeline and publish every SSE event to the queue."""
     global pipeline
@@ -221,7 +237,7 @@ async def _process_letter(
             return
         stream = pipeline.process_mock(example_name)
     else:
-        stream = pipeline.process(file_path, text, country, language)
+        stream = pipeline.process(file_path, text, country, language, queue_ms=queue_ms)
 
     events_log: list[dict] = []
     try:
@@ -521,16 +537,26 @@ async def generate_draft(letter_id: str, request: DraftRequest):
     if request.tone == Tone.NEUTRAL:
         if answer.draft_replies and answer.draft_replies.neutral:
             return answer.draft_replies
-        # Generate neutral if not present
+        # Editable acknowledgement: admits nothing, promises nothing.
         return DraftReplies(
-            neutral="Thank you for the notice. I will review and respond appropriately."
+            neutral="I acknowledge receipt of your letter. I am reviewing its "
+            "contents and will respond. This is editable example wording."
         )
 
     # For polite/firm, would call LLM with tone-specific prompt
-    # For now, return mock
+    # Templates never promise payment, admit liability, or invent a reply window.
     tone_text = {
-        Tone.POLITE: "I kindly acknowledge receipt of your notice. I will review the matter and respond within the given timeframe.",
-        Tone.FIRM: "I have received your notice. I dispute the claims made and request a formal review. I expect a written response within 14 days.",
+        Tone.POLITE: (
+            "Thank you for your letter. I am reviewing the matter and will "
+            "respond once I have checked the details. This is editable "
+            "example wording."
+        ),
+        Tone.FIRM: (
+            "I do not accept the assertions in this letter without supporting "
+            "evidence. Please provide full details of the claim and the basis "
+            "for it. I reserve the right to respond further. This is editable "
+            "example wording."
+        ),
     }
 
     return DraftReplies(
@@ -621,4 +647,7 @@ async def delete_letter(letter_id: str):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    # Bind everywhere when PORT is set (Render), loopback-only for local dev
+    port = int(os.getenv("PORT", "8000"))
+    host = "0.0.0.0" if os.getenv("PORT") else "127.0.0.1"
+    uvicorn.run(app, host=host, port=port)

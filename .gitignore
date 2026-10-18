@@ -46,6 +46,7 @@ build/
 # Real user letters (never commit)
 /samples/real/
 /data/letters/
+/data/uploads/
 
 # Logs
 *.log
@@ -54,3 +55,4 @@ build/
 .coverage
 htmlcov/
 .pytest_cache/
+.ruff_cache/

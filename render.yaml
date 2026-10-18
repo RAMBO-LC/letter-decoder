@@ -1,0 +1,14 @@
+# Render blueprint: https://render.com/blueprints
+# Deploys the Letter Decoder API as a Docker web service (mock engine — no GPU needed).
+# Set CORS_ORIGINS in the Render dashboard after your Vercel URL is final.
+services:
+  - type: web
+    name: letter-decoder-api
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: ENGINE_MODE
+        value: mock
+      - key: CORS_ORIGINS
+        value: https://letter-decoder.vercel.app,https://letter-decoder-api.onrender.com
