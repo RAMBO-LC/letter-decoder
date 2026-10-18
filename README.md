@@ -27,7 +27,7 @@ No cloud calls. No telemetry. No accounts. **The letter never leaves your device
 | | URL | What it is |
 |---|---|---|
 | **Frontend** | https://letter-decoder.vercel.app | React app (Vercel) |
-| **API** | https://letter-decoder-api.onrender.com | FastAPI engine (Render) |
+| **API** | https://letter-decoder-api-qvxs.onrender.com | FastAPI engine (Render) |
 
 > The public API runs `ENGINE_MODE=mock`, replaying canonical examples through the same
 > endpoints and SSE event streams with realistic delays. For real decoding with an open-weight

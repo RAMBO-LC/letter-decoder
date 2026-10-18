@@ -4,7 +4,11 @@ const LS_KEY = "ld-api-base";
 const ENV_API_BASE = import.meta.env.VITE_API_URL as string | undefined;
 
 export function getApiBase(): string {
-  return localStorage.getItem(LS_KEY) || ENV_API_BASE || "http://127.0.0.1:8000";
+  return (
+    localStorage.getItem(LS_KEY) ||
+    ENV_API_BASE ||
+    (import.meta.env.DEV ? "http://127.0.0.1:8000" : window.location.origin)
+  );
 }
 
 
