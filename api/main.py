@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import uuid
 from contextlib import asynccontextmanager
@@ -27,6 +28,7 @@ from engine.pipeline import LetterDecoderPipeline
 # Global pipeline instance
 pipeline: LetterDecoderPipeline | None = None
 letter_store: dict[str, Answer] = {}
+letter_samples: dict[str, str] = {}
 
 
 @asynccontextmanager
@@ -134,12 +136,14 @@ async def upload_letter(
     text: str | None = Form(None),
     country: str = Form("XX"),
     language: str = Form("en"),
+    sample: str | None = Form(None),
 ):
     """Upload a letter for processing."""
-    if not file and not text:
+    if not file and not text and not sample:
         raise HTTPException(status_code=400, detail="Either file or text must be provided")
 
     letter_id = uuid.uuid4().hex[:12]
+    letter_samples[letter_id] = sample
 
     # Save file if provided
     file_path = None
@@ -178,6 +182,17 @@ async def _process_letter(
     if not pipeline:
         return
 
+    # Mock mode with a named sample: load the canned answer directly
+    sample = letter_samples.get(letter_id)
+    if pipeline.engine_mode == "mock" and sample:
+        try:
+            example = pipeline.load_mock_example(sample)
+            example.id = letter_id
+            letter_store[letter_id] = example
+        except ValueError:
+            pass
+        return
+
     answer = letter_store[letter_id]
     answer.status = AnswerStatus.READING
 
@@ -207,12 +222,12 @@ async def letter_events(letter_id: str, request: Request):
 
     async def event_generator():
         if pipeline and pipeline.engine_mode == "mock":
-            # For mock mode, we need to know which example to use
-            # This is simplified - in real use, the example would be determined by the input
-            async for event in pipeline.process_mock("routine"):
+            example_name = letter_samples.get(letter_id) or "routine"
+            async for event in pipeline.process_mock(example_name):
                 if await request.is_disconnected():
                     break
-                yield f"id: {event['id']}\nevent: {event['event']}\ndata: {event['data']}\n\n"
+                payload = json.dumps(event["data"], default=str)
+                yield f"id: {event['id']}\nevent: {event['event']}\ndata: {payload}\n\n"
         else:
             # For real mode, events are generated during processing
             # This is a simplified replay - in production, use a proper event bus
@@ -222,7 +237,8 @@ async def letter_events(letter_id: str, request: Request):
                 for event in events:
                     if await request.is_disconnected():
                         break
-                    yield f"id: {event['id']}\nevent: {event['event']}\ndata: {event['data']}\n\n"
+                    payload = json.dumps(event["data"], default=str)
+                    yield f"id: {event['id']}\nevent: {event['event']}\ndata: {payload}\n\n"
             else:
                 # Still processing - send heartbeat
                 yield ": heartbeat\n\n"
@@ -399,6 +415,37 @@ async def list_letters():
             }
         )
     return {"letters": result}
+
+
+# List notice packs
+@app.get("/api/packs")
+async def list_packs():
+    """List available notice packs from the notices directory."""
+    packs = []
+    notices_dir = pipeline.notices_dir if pipeline else Path("notices")
+    if notices_dir.exists():
+        import yaml
+
+        for path in sorted(notices_dir.rglob("*.yaml")):
+            try:
+                data = yaml.safe_load(path.read_text())
+            except Exception:
+                data = {}
+            if not isinstance(data, dict):
+                data = {}
+            packs.append(
+                {
+                    "id": data.get("id", path.stem),
+                    "name": data.get("names", [path.stem])[0] if data.get("names") else path.stem,
+                    "country": data.get("country", "XX"),
+                    "language": data.get("language", "en"),
+                    "severity": data.get("severity", "unknown"),
+                    "meaning": data.get("meaning", ""),
+                    "keywords": data.get("keywords", []),
+                    "path": str(path.relative_to(notices_dir)),
+                }
+            )
+    return {"packs": packs}
 
 
 # Update step completion
