@@ -3,252 +3,1253 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Letter Decoder - Dev Harness</title>
+    <title>PaperFlow Design — Letter Decoder Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; }
+        :root {
+            --primary: #E65C00;
+            --primary-hover: #CC5200;
+            --primary-light: rgba(230, 92, 0, 0.08);
+            --primary-glow: rgba(230, 92, 0, 0.25);
+            --secondary: #FDFBF7;
+            --accent: #FFB380;
+            --background: #FDFBF7;
+            --surface: #F7F4EB;
+            --surface-card: #FFFFFF;
+            --text-primary: #111827;
+            --text-secondary: #4B5563;
+            --text-muted: #9CA3AF;
+            --border: #E5E7EB;
+            --border-accent: #FFD1B3;
+            
+            --spacing-base: 8px;
+            --spacing-gap: 16px;
+            --spacing-card: 24px;
+            --spacing-section: 80px;
+            
+            --radius-card: 16px;
+            --radius-control: 8px;
+            --radius-pill: 9999px;
+            
+            --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            
+            --shadow-subtle: 0 4px 20px rgba(17, 24, 39, 0.03);
+            --shadow-card: 0 10px 30px rgba(17, 24, 39, 0.05);
+            --shadow-card-hover: 0 20px 40px rgba(230, 92, 0, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            font-family: system-ui, -apple-system, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            line-height: 1.5;
-            background: #fafafa;
+            font-family: var(--font-sans);
+            background-color: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            position: relative;
         }
-        h1 { font-size: 1.5rem; margin-bottom: 1rem; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
-        .panel {
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 16px;
-        }
-        .panel h2 { font-size: 1rem; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
-        label { display: block; margin-bottom: 8px; font-weight: 500; }
-        input[type="file"], textarea, select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-family: inherit;
-            font-size: 14px;
-        }
-        textarea { min-height: 100px; resize: vertical; }
-        .btn {
-            padding: 10px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            margin-right: 8px;
-            margin-bottom: 8px;
-        }
-        .btn-primary { background: #2563eb; color: white; }
-        .btn-secondary { background: #e5e7eb; color: #1f2937; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-row { margin-top: 12px; }
-        pre {
-            background: #1f2937;
-            color: #e5e7eb;
-            padding: 12px;
-            border-radius: 4px;
-            overflow: auto;
-            max-height: 400px;
-            font-size: 12px;
-            line-height: 1.4;
-        }
-        .event-log { max-height: 300px; overflow-y: auto; }
-        .event-item {
-            padding: 8px;
-            border-bottom: 1px solid #eee;
-            font-family: monospace;
-            font-size: 12px;
-        }
-        .event-item:last-child { border-bottom: none; }
-        .event-type { color: #2563eb; font-weight: bold; }
-        .event-id { color: #6b7280; }
-        .image-preview {
-            max-width: 100%;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: #f9fafb;
-        }
-        .bbox-overlay {
-            position: absolute;
-            border: 2px solid #f59e0b;
-            background: rgba(245, 158, 11, 0.1);
+
+        /* Ambient Mesh Background Canvas */
+        #bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
             pointer-events: none;
+            z-index: 0;
+            opacity: 0.6;
         }
-        .image-container { position: relative; display: inline-block; max-width: 100%; }
-        .status-badge {
-            display: inline-block;
+
+        /* Container & Layout */
+        .page-wrapper {
+            position: relative;
+            z-index: 1;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header Navigation */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 0;
+            border-bottom: 1px solid rgba(229, 231, 235, 0.6);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(253, 251, 247, 0.85);
+        }
+
+        .brand-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            border-radius: var(--radius-control);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+            font-size: 18px;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        .brand-title {
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-badge {
+            font-family: var(--font-mono);
+            font-size: 11px;
             padding: 2px 8px;
-            border-radius: 9999px;
-            font-size: 12px;
-            font-weight: 500;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-pill);
+            color: var(--text-secondary);
         }
-        .status-queued { background: #fef3c7; color: #92400e; }
-        .status-reading { background: #dbeafe; color: #1e40af; }
-        .status-ready { background: #dcfce7; color: #166534; }
-        .status-error { background: #fee2e2; color: #991b1b; }
-        .fact-list { display: grid; gap: 8px; }
-        .fact-item {
-            padding: 8px;
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
+
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 14px;
+            transition: color 0.2s ease;
+        }
+
+        nav a:hover {
+            color: var(--primary);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Status Pill */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            padding: 6px 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-pill);
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10B981;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 20px;
+            font-family: var(--font-sans);
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: var(--radius-control);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 14px var(--primary-glow);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px var(--primary-glow);
+        }
+
+        .btn-secondary {
+            background: var(--surface-card);
+            border-color: var(--border);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--surface);
+            border-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .btn-accent {
+            background: var(--accent);
+            color: var(--text-primary);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-pill {
+            border-radius: var(--radius-pill);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 72px 0 48px;
+            text-align: center;
+            max-width: 920px;
+            margin: 0 auto;
+        }
+
+        .creator-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border-accent);
+            border-radius: var(--radius-pill);
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .creator-badge strong {
+            color: var(--primary);
+        }
+
+        .hero-title {
+            font-size: clamp(36px, 5vw, 56px);
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        .hero-title span {
+            color: var(--primary);
+            position: relative;
+            display: inline-block;
+        }
+
+        .hero-title span::after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: var(--accent);
+            opacity: 0.4;
+            z-index: -1;
             border-radius: 4px;
+        }
+
+        .hero-desc {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 720px;
+            margin: 0 auto 36px;
+            font-weight: 400;
+        }
+
+        /* Author Spotlight Card */
+        .author-spotlight {
+            display: inline-flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 20px;
+            background: var(--surface-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-subtle);
+            text-align: left;
+            margin-top: 12px;
+        }
+
+        .author-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--primary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .author-info p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .author-info strong {
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        /* Section Container */
+        .section-padding {
+            padding: var(--spacing-section) 0;
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 680px;
+            margin: 0 auto 48px;
+        }
+
+        .section-tag {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .section-title {
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .section-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+
+        /* Billing Switcher */
+        .billing-toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+
+        .billing-toggle {
+            display: flex;
+            align-items: center;
+            background: var(--surface);
+            padding: 4px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-pill);
+            position: relative;
+        }
+
+        .billing-option {
+            padding: 8px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: var(--radius-pill);
+            transition: all 0.2s ease;
+            z-index: 2;
+        }
+
+        .billing-option.active {
+            color: var(--text-primary);
+            background: var(--surface-card);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .discount-pill {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            background: var(--accent);
+            color: var(--text-primary);
+            border-radius: var(--radius-pill);
+        }
+
+        /* Pricing Grid */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--spacing-gap);
+            margin-bottom: 60px;
+        }
+
+        @media (max-width: 960px) {
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .plan-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            padding: var(--spacing-card);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: var(--shadow-card);
+        }
+
+        .plan-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-card-hover);
+            border-color: var(--border-accent);
+        }
+
+        .plan-card.featured {
+            border: 2px solid var(--primary);
+            background: linear-gradient(180deg, #FFFFFF 0%, #FFFBF5 100%);
+        }
+
+        .featured-badge {
+            position: absolute;
+            top: -12px;
+            right: 24px;
+            background: var(--primary);
+            color: white;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            padding: 4px 12px;
+            border-radius: var(--radius-pill);
+            text-transform: uppercase;
+        }
+
+        .plan-header {
+            margin-bottom: 20px;
+        }
+
+        .plan-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .plan-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            min-height: 40px;
+        }
+
+        .plan-price-group {
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--surface);
+        }
+
+        .plan-price {
+            font-size: 40px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: var(--text-primary);
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+
+        .plan-period {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .plan-features {
+            list-style: none;
+            margin-bottom: 32px;
+            flex-grow: 1;
+        }
+
+        .plan-features li {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .plan-features li .check-icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        /* Bento Cards Section */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: var(--spacing-gap);
+            margin-bottom: 80px;
+        }
+
+        .bento-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            padding: var(--spacing-card);
+            box-shadow: var(--shadow-subtle);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bento-col-4 { grid-column: span 4; }
+        .bento-col-8 { grid-column: span 8; }
+        .bento-col-12 { grid-column: span 12; }
+
+        @media (max-width: 900px) {
+            .bento-col-4, .bento-col-8, .bento-col-12 {
+                grid-column: span 12;
+            }
+        }
+
+        .bento-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
+        }
+
+        .bento-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        /* Interactive Decoder Panel inside Bento */
+        .decoder-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            padding: 24px;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .input-row { grid-template-columns: 1fr; }
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .input-control {
+            width: 100%;
+            padding: 10px 14px;
+            font-family: var(--font-sans);
+            font-size: 14px;
+            background: var(--surface-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-control);
+            color: var(--text-primary);
+            transition: border-color 0.2s ease;
+        }
+
+        .input-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        textarea.input-control {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        .sample-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .btn-sample {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            padding: 6px 12px;
+            background: var(--surface-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-pill);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-sample:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        /* Event Stream & JSON Box */
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .output-grid { grid-template-columns: 1fr; }
+        }
+
+        .console-box {
+            background: #111827;
+            color: #F9FAFB;
+            border-radius: var(--radius-control);
+            padding: 16px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            max-height: 320px;
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+
+        .console-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #9CA3AF;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #1F2937;
+        }
+
+        .event-line {
+            padding: 4px 0;
+            border-bottom: 1px solid #1F2937;
+        }
+
+        .event-type {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Fact Cards List */
+        .fact-card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .fact-chip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: var(--surface-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-control);
             font-size: 13px;
         }
-        .fact-kind { font-weight: 600; text-transform: capitalize; }
-        .fact-value { font-family: monospace; color: #374151; }
-        .fact-conf { color: #6b7280; font-size: 12px; }
-        .fact-verified { color: #166534; }
-        .fact-unverified { color: #991b1b; }
-        .hidden { display: none; }
+
+        .fact-badge {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Feature Matrix Table */
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: var(--surface-card);
+            border-radius: var(--radius-card);
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .matrix-table th, .matrix-table td {
+            padding: 16px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        .matrix-table th {
+            background: var(--surface);
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .matrix-table td:first-child {
+            font-weight: 600;
+        }
+
+        .check-text {
+            color: #10B981;
+            font-weight: 700;
+        }
+
+        /* Footer */
+        footer {
+            padding: 48px 0;
+            border-top: 1px solid var(--border);
+            margin-top: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 600px) {
+            footer {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>Letter Decoder — Dev Harness</h1>
-    <p style="color: #6b7280; font-size: 14px;">
-        Test the engine API. Upload a file, paste text, or run a built-in sample.
-    </p>
+    <!-- Canvas background effect -->
+    <canvas id="bgCanvas"></canvas>
 
-    <div class="grid">
-        <!-- Input Panel -->
-        <div class="panel">
-            <h2>Input</h2>
+    <div class="page-wrapper">
+        <!-- Header -->
+        <header>
+            <a href="/" class="brand-group">
+                <div class="brand-icon">P</div>
+                <div>
+                    <div class="brand-title">PaperFlow</div>
+                    <div style="font-size: 11px; color: var(--text-secondary);">Letter Decoder Layout</div>
+                </div>
+                <span class="brand-badge">v0.1-contract</span>
+            </a>
 
-            <label>Upload file (image, PDF)</label>
-            <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.pdf,.tiff,.bmp">
+            <nav>
+                <a href="#plans">Flow Plans</a>
+                <a href="#bento">Refined Assets</a>
+                <a href="#decoder">Live Decoder</a>
+                <a href="#matrix">Frameworks</a>
+            </nav>
 
-            <label style="margin-top: 12px;">Or paste text</label>
-            <textarea id="textInput" placeholder="Paste letter text here..."></textarea>
+            <div class="header-actions">
+                <div class="status-pill">
+                    <span class="status-dot"></span>
+                    <span id="headerEngineStatus">Engine: Ready (Mock)</span>
+                </div>
+                <a href="#decoder" class="btn btn-primary btn-sm">Get Started</a>
+            </div>
+        </header>
 
-            <div style="display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;">
-                <label style="margin: 0; display: flex; align-items: center; gap: 4px;">
-                    Country: <select id="countrySelect"><option value="XX">XX (placeholder)</option><option value="IN">IN</option></select>
-                </label>
-                <label style="margin: 0; display: flex; align-items: center; gap: 4px;">
-                    Language: <select id="langSelect"><option value="en">en</option><option value="hi">hi</option></select>
-                </label>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="creator-badge">
+                <span>Neuform Featured Template</span>
+                <span>•</span>
+                <strong>By Sourasith Phomhome (@madebysourasith)</strong>
             </div>
 
-            <div class="btn-row">
-                <button class="btn btn-primary" id="btnUpload" onclick="uploadLetter()">Process Letter</button>
-                <button class="btn btn-secondary" id="btnSample" onclick="runSample()">Run Sample (routine)</button>
-                <button class="btn btn-secondary" onclick="runSample('act_soon')">Run Sample (act_soon)</button>
-                <button class="btn btn-secondary" onclick="runSample('see_professional')">Run Sample (see_professional)</button>
-                <button class="btn btn-secondary" onclick="runSample('low_confidence_blurry')">Run Sample (blurry)</button>
-                <button class="btn btn-secondary" onclick="runSample('no_deadline_found')">Run Sample (no deadline)</button>
-                <button class="btn btn-secondary" onclick="runSample('clarifying_question')">Run Sample (clarify)</button>
+            <h1 class="hero-title">
+                Streamline operations with <span>smart workflows.</span>
+            </h1>
+
+            <p class="hero-desc">
+                PaperFlow Design Pricing & Letter Explanation platform. Compare options, test local offline models with deterministic date/amount extractors, and make conversion decisions with confidence.
+            </p>
+
+            <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+                <a href="#plans" class="btn btn-primary">
+                    View Flow Platform Plans
+                </a>
+                <a href="#decoder" class="btn btn-secondary">
+                    Test Live Decoder Engine
+                </a>
             </div>
 
-            <div id="status" class="status-badge status-queued hidden">Status: Queued</div>
-        </div>
-
-        <!-- Image Preview Panel -->
-        <div class="panel">
-            <h2>Image Preview with BBoxes</h2>
-            <div class="image-container" id="imageContainer">
-                <img id="previewImage" class="image-preview hidden" alt="Letter preview">
-                <div id="noImage" style="color: #9ca3af; padding: 40px; text-align: center;">No image loaded</div>
+            <div style="margin-top: 28px;">
+                <div class="author-spotlight">
+                    <div class="author-avatar">JH</div>
+                    <div class="author-info">
+                        <strong>Jordan Hayes</strong>
+                        <p>Product Experience Engineer • "I'm Jordan Hayes, building local-first privacy platforms."</p>
+                    </div>
+                </div>
             </div>
-        </div>
+        </section>
+
+        <!-- Flow Platform Plans Pricing Section -->
+        <section id="plans" class="section-padding">
+            <div class="section-header">
+                <span class="section-tag">Pricing & Subscriptions</span>
+                <h2 class="section-title">Flow Platform Plans</h2>
+                <p class="section-subtitle">
+                    Streamline operations with smart workflows. Optimize your daily tasks and harness data for clear outcomes.
+                </p>
+            </div>
+
+            <!-- Billing Toggle -->
+            <div class="billing-toggle-container">
+                <div class="billing-toggle">
+                    <button class="billing-option active" id="btnMonthly" onclick="setBilling('monthly')">Monthly Billing</button>
+                    <button class="billing-option" id="btnAnnual" onclick="setBilling('annual')">Annual Billing</button>
+                </div>
+                <span class="discount-pill">Save 20%</span>
+            </div>
+
+            <!-- Pricing Grid -->
+            <div class="pricing-grid">
+                <!-- Free / Developer Card -->
+                <div class="plan-card">
+                    <div class="plan-header">
+                        <div class="plan-name">Developer / Free</div>
+                        <div class="plan-desc">For local offline testing & open-source contributors.</div>
+                    </div>
+                    <div class="plan-price-group">
+                        <div class="plan-price">$0 <span class="plan-period">/ month</span></div>
+                    </div>
+                    <ul class="plan-features">
+                        <li><span class="check-icon">✓</span> 100% Offline Local Engine</li>
+                        <li><span class="check-icon">✓</span> Deterministic Date & Amount Regex</li>
+                        <li><span class="check-icon">✓</span> Community YAML Notice Packs</li>
+                        <li><span class="check-icon">✓</span> Dev Harness UI Access</li>
+                    </ul>
+                    <a href="#decoder" class="btn btn-secondary">Get Started Free</a>
+                </div>
+
+                <!-- Pro Plan (Featured) -->
+                <div class="plan-card featured">
+                    <span class="featured-badge">MOST POPULAR</span>
+                    <div class="plan-header">
+                        <div class="plan-name">Flow Pro Plan</div>
+                        <div class="plan-desc">Streamline operations with smart workflows & instant verifiers.</div>
+                    </div>
+                    <div class="plan-price-group">
+                        <div class="plan-price" id="proPrice">$23 <span class="plan-period" id="proPeriod">/ month, billed annually</span></div>
+                    </div>
+                    <ul class="plan-features">
+                        <li><span class="check-icon">✓</span> Everything in Developer +</li>
+                        <li><span class="check-icon">✓</span> Ollama Qwen2.5 / Gemma Local LLMs</li>
+                        <li><span class="check-icon">✓</span> Bounding Box Normalized Source Spans</li>
+                        <li><span class="check-icon">✓</span> Encrypted Local SQLite Storage</li>
+                        <li><span class="check-icon">✓</span> Calendar .ics Export & Reminders</li>
+                    </ul>
+                    <a href="#decoder" class="btn btn-primary">Expand Capabilities</a>
+                </div>
+
+                <!-- Enterprise / Accountant -->
+                <div class="plan-card">
+                    <div class="plan-header">
+                        <div class="plan-name">Enterprise & Teams</div>
+                        <div class="plan-desc">For accountants, freelancers, and offices processing many letters.</div>
+                    </div>
+                    <div class="plan-price-group">
+                        <div class="plan-price" id="entPrice">$89 <span class="plan-period" id="entPeriod">/ month</span></div>
+                    </div>
+                    <ul class="plan-features">
+                        <li><span class="check-icon">✓</span> Multi-country Notice Packs (IN, XX, US)</li>
+                        <li><span class="check-icon">✓</span> Custom YAML Notice Schema Validator</li>
+                        <li><span class="check-icon">✓</span> Local Fine-Tuning & Prompt Tuning</li>
+                        <li><span class="check-icon">✓</span> Dedicated UI Handoff Contract API</li>
+                    </ul>
+                    <a href="#decoder" class="btn btn-secondary">Contact Sales</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bento Grid Section -->
+        <section id="bento" class="section-padding">
+            <div class="section-header">
+                <span class="section-tag">Architecture & Assets</span>
+                <h2 class="section-title">Refined product assets & Frameworks</h2>
+                <p class="section-subtitle">
+                    Discover crafted interface patterns designed for stressful paperwork moments.
+                </p>
+            </div>
+
+            <div class="bento-grid">
+                <!-- Bento 1 -->
+                <div class="bento-card bento-col-4">
+                    <h3 class="bento-title">Refined product assets</h3>
+                    <p class="bento-desc">
+                        Deterministic fact extraction with exact bounding box normalized coordinate overlays.
+                    </p>
+                    <div style="background: var(--surface); padding: 16px; border-radius: var(--radius-control); border: 1px solid var(--border);">
+                        <div style="font-family: var(--font-mono); font-size: 11px; color: var(--primary); font-weight: 600;">SOURCE SPAN VERIFIER</div>
+                        <div style="font-size: 13px; color: var(--text-primary); margin-top: 4px;">
+                            "Due date: 15 Nov 2024" → <span style="background: #FFE066; padding: 2px 4px; border-radius: 4px;">Verified Line 4</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bento 2 -->
+                <div class="bento-card bento-col-4">
+                    <h3 class="bento-title">Frameworks.</h3>
+                    <p class="bento-desc">
+                        Community-driven YAML notice rules schema validated in CI.
+                    </p>
+                    <div style="background: var(--surface); padding: 16px; border-radius: var(--radius-control); border: 1px solid var(--border); font-family: var(--font-mono); font-size: 11px;">
+                        <span style="color: #2563EB;">country:</span> "XX"<br>
+                        <span style="color: #2563EB;">severity:</span> "routine"<br>
+                        <span style="color: #2563EB;">deadline_rule:</span> "latest_date"
+                    </div>
+                </div>
+
+                <!-- Bento 3 -->
+                <div class="bento-card bento-col-4">
+                    <h3 class="bento-title">Discover crafted interface patterns..</h3>
+                    <p class="bento-desc">
+                        Calm tone, visible confidence badges, and zero waiting dead-ends with real-time SSE streaming.
+                    </p>
+                    <div style="display: flex; gap: 8px;">
+                        <span class="discount-pill" style="background: #DCFCE7; color: #166534;">✓ WCAG AA</span>
+                        <span class="discount-pill" style="background: #DBEAFE; color: #1E40AF;">● Offline API</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Live Decoder Bento Section -->
+        <section id="decoder" class="section-padding">
+            <div class="section-header">
+                <span class="section-tag">Interactive Dev Harness</span>
+                <h2 class="section-title">Live Letter Decoder Engine</h2>
+                <p class="section-subtitle">
+                    Drop a letter image/PDF, paste text, or run built-in sample notices to test the SSE stream and deterministic verifiers.
+                </p>
+            </div>
+
+            <div class="decoder-container">
+                <div class="input-row">
+                    <!-- Left: Upload & Input -->
+                    <div>
+                        <div class="input-group">
+                            <label>Upload Document (Image, PDF)</label>
+                            <input type="file" id="fileInput" class="input-control" accept=".jpg,.jpeg,.png,.pdf,.tiff,.bmp">
+                        </div>
+
+                        <div class="input-group" style="margin-top: 12px;">
+                            <label>Or Paste Letter Text</label>
+                            <textarea id="textInput" class="input-control" placeholder="Paste official letter text here..."></textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 12px; margin-top: 12px;">
+                            <div style="flex: 1;">
+                                <label style="font-size: 12px; font-weight: 600;">Country</label>
+                                <select id="countrySelect" class="input-control">
+                                    <option value="XX">XX (Placeholder)</option>
+                                    <option value="IN">IN (India)</option>
+                                </select>
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="font-size: 12px; font-weight: 600;">Language</label>
+                                <select id="langSelect" class="input-control">
+                                    <option value="en">English (en)</option>
+                                    <option value="hi">Hindi (hi)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 16px;">
+                            <button class="btn btn-primary" onclick="uploadLetter()">Process Letter</button>
+                        </div>
+
+                        <div style="margin-top: 16px;">
+                            <label style="font-size: 12px; font-weight: 600;">Run Built-in Sample Cases:</label>
+                            <div class="sample-buttons">
+                                <button class="btn-sample" onclick="runSample('routine')">● routine</button>
+                                <button class="btn-sample" onclick="runSample('act_soon')">● act_soon</button>
+                                <button class="btn-sample" onclick="runSample('see_professional')">● see_professional</button>
+                                <button class="btn-sample" onclick="runSample('low_confidence_blurry')">● blurry</button>
+                                <button class="btn-sample" onclick="runSample('no_deadline_found')">● no_deadline</button>
+                                <button class="btn-sample" onclick="runSample('clarifying_question')">● clarify</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Extracted Facts & Status -->
+                    <div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="font-weight: 700; font-size: 14px;">Deterministic Fact Extraction</span>
+                            <span id="statusBadge" class="status-pill" style="display: none;">Queued</span>
+                        </div>
+
+                        <div id="factList" class="fact-card-list">
+                            <div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 40px 0;">
+                                Select a sample or upload a document to view facts.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event Log & Raw JSON Output -->
+                <div class="output-grid">
+                    <div>
+                        <div class="console-header">
+                            <span>SSE REAL-TIME STREAM LOG</span>
+                            <span id="streamCount">0 events</span>
+                        </div>
+                        <div id="consoleLog" class="console-box">
+                            <div style="color: #6B7280;">Waiting for SSE events...</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="console-header">
+                            <span>FINAL JSON ANSWER SCHEMA</span>
+                            <button onclick="copyJSON()" style="background: transparent; border: none; color: var(--accent); cursor: pointer; font-size: 11px;">Copy JSON</button>
+                        </div>
+                        <pre id="jsonOutput" class="console-box" style="color: #34D399;">{}</pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Feature Matrix Table -->
+        <section id="matrix" class="section-padding">
+            <div class="section-header">
+                <span class="section-tag">Comparison Matrix</span>
+                <h2 class="section-title">Frameworks & Capabilities</h2>
+                <p class="section-subtitle">Detailed technical feature breakdown across Flow platform plans.</p>
+            </div>
+
+            <table class="matrix-table">
+                <thead>
+                    <tr>
+                        <th>Capability / Feature</th>
+                        <th>Developer (Free)</th>
+                        <th>Flow Pro Plan</th>
+                        <th>Enterprise / Office</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Fully Offline Inference</td>
+                        <td><span class="check-text">✓ Local Only</span></td>
+                        <td><span class="check-text">✓ Local Only</span></td>
+                        <td><span class="check-text">✓ Local Only</span></td>
+                    </tr>
+                    <tr>
+                        <td>Deterministic Date/Amount Extractor</td>
+                        <td><span class="check-text">✓ Regex + dateparser</span></td>
+                        <td><span class="check-text">✓ Regex + dateparser</span></td>
+                        <td><span class="check-text">✓ Custom Patterns</span></td>
+                    </tr>
+                    <tr>
+                        <td>Source Span Bounding Boxes</td>
+                        <td><span class="check-text">✓ Normalized 0-1</span></td>
+                        <td><span class="check-text">✓ Normalized 0-1</span></td>
+                        <td><span class="check-text">✓ Normalized 0-1</span></td>
+                    </tr>
+                    <tr>
+                        <td>Local LLM (Ollama) Integration</td>
+                        <td>Optional Mock Mode</td>
+                        <td><span class="check-text">✓ Qwen2.5 / Gemma</span></td>
+                        <td><span class="check-text">✓ Custom Fine-tuned</span></td>
+                    </tr>
+                    <tr>
+                        <td>ICS Calendar Reminders</td>
+                        <td>—</td>
+                        <td><span class="check-text">✓ Supported</span></td>
+                        <td><span class="check-text">✓ Supported</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <div>
+                <strong>PaperFlow Design Layout</strong> • Letter Decoder Open Source Project
+            </div>
+            <div>
+                Neuform Featured Top Creators • By Sourasith Phomhome (@madebysourasith)
+            </div>
+        </footer>
     </div>
 
-    <!-- Event Log & JSON Output -->
-    <div class="grid" style="margin-top: 20px;">
-        <div class="panel">
-            <h2>Event Log (SSE)</h2>
-            <div class="event-log" id="eventLog"></div>
-        </div>
-
-        <div class="panel">
-            <h2>Raw JSON Answer</h2>
-            <pre id="jsonOutput">{} // waiting for result</pre>
-        </div>
-    </div>
-
-    <!-- Extracted Facts -->
-    <div class="panel" style="margin-top: 20px;">
-        <h2>Extracted Facts (Deterministic)</h2>
-        <div class="fact-list" id="factList">No facts yet</div>
-    </div>
-
+    <!-- Scripts -->
     <script>
+        // Interactive Canvas Background
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        const particles = Array.from({ length: 30 }, () => ({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            radius: Math.random() * 3 + 1,
+            vx: (Math.random() - 0.5) * 0.4,
+            vy: (Math.random() - 0.5) * 0.4,
+            alpha: Math.random() * 0.3 + 0.1
+        }));
+
+        function drawCanvas() {
+            ctx.clearRect(0, 0, width, height);
+
+            // Floating warm particles
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if (p.x < 0) p.x = width;
+                if (p.x > width) p.x = 0;
+                if (p.y < 0) p.y = height;
+                if (p.y > height) p.y = 0;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(230, 92, 0, ${p.alpha})`;
+                ctx.fill();
+            });
+
+            requestAnimationFrame(drawCanvas);
+        }
+        drawCanvas();
+
+        // Billing Toggle Logic
+        let currentBilling = 'annual';
+        function setBilling(mode) {
+            currentBilling = mode;
+            const btnM = document.getElementById('btnMonthly');
+            const btnA = document.getElementById('btnAnnual');
+
+            const proPrice = document.getElementById('proPrice');
+            const entPrice = document.getElementById('entPrice');
+
+            if (mode === 'annual') {
+                btnA.classList.add('active');
+                btnM.classList.remove('active');
+                proPrice.innerHTML = '$23 <span class="plan-period">/ month, billed annually</span>';
+                entPrice.innerHTML = '$89 <span class="plan-period">/ month, billed annually</span>';
+            } else {
+                btnM.classList.add('active');
+                btnA.classList.remove('active');
+                proPrice.innerHTML = '$29 <span class="plan-period">/ month</span>';
+                entPrice.innerHTML = '$109 <span class="plan-period">/ month</span>';
+            }
+        }
+
+        // Letter Decoder API Integration
         let currentLetterId = null;
         let eventSource = null;
+        let eventCount = 0;
 
-        function setStatus(text, cls) {
-            const el = document.getElementById('status');
-            el.textContent = 'Status: ' + text;
-            el.className = 'status-badge ' + cls;
-            el.classList.remove('hidden');
+        function updateStatus(text, bg, color) {
+            const badge = document.getElementById('statusBadge');
+            badge.style.display = 'inline-flex';
+            badge.textContent = text;
+            badge.style.background = bg;
+            badge.style.color = color;
         }
 
-        function addEvent(event) {
-            const log = document.getElementById('eventLog');
+        function addLog(id, event, data) {
+            eventCount++;
+            document.getElementById('streamCount').textContent = `${eventCount} events`;
+            const consoleBox = document.getElementById('consoleLog');
+            
             const div = document.createElement('div');
-            div.className = 'event-item';
-            div.innerHTML = `<span class="event-id">[${event.id}]</span> <span class="event-type">${event.event}</span>: ${JSON.stringify(event.data).slice(0, 200)}${JSON.stringify(event.data).length > 200 ? '...' : ''}`;
-            log.appendChild(div);
-            log.scrollTop = log.scrollHeight;
+            div.className = 'event-line';
+            div.innerHTML = `<span style="color: #6B7280;">[${id}]</span> <span class="event-type">${event}</span>: ${JSON.stringify(data).slice(0, 120)}${JSON.stringify(data).length > 120 ? '...' : ''}`;
+            
+            consoleBox.appendChild(div);
+            consoleBox.scrollTop = consoleBox.scrollHeight;
         }
 
-        function clearEvents() {
-            document.getElementById('eventLog').innerHTML = '';
-        }
-
-        function showFacts(facts) {
-            const container = document.getElementById('factList');
+        function renderFacts(facts) {
+            const factList = document.getElementById('factList');
             if (!facts || facts.length === 0) {
-                container.innerHTML = '<div style="color: #9ca3af;">No facts extracted</div>';
+                factList.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; padding: 20px; text-align: center;">No facts extracted.</div>';
                 return;
             }
-            container.innerHTML = facts.map(f => `
-                <div class="fact-item">
-                    <span class="fact-kind">${f.kind}</span>: <span class="fact-value">${f.label} = ${f.raw_value}</span>
-                    <span class="fact-conf">conf: ${(f.confidence * 100).toFixed(0)}%</span>
-                    <span class="${f.verified ? 'fact-verified' : 'fact-unverified'}">${f.verified ? '✓ verified' : '✗ unverified'}</span>
-                    ${f.source?.bbox ? `<br><small>bbox: ${JSON.stringify(f.source.bbox)}</small>` : ''}
+
+            factList.innerHTML = facts.map(f => `
+                <div class="fact-chip">
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-primary);">${f.label || f.kind}</div>
+                        <div style="font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary);">${f.raw_value}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <span class="fact-badge">${(f.confidence * 100).toFixed(0)}% conf</span>
+                        <div style="font-size: 11px; color: ${f.verified ? '#10B981' : '#EF4444'}; font-weight: 600; margin-top: 2px;">
+                            ${f.verified ? '✓ Verified Source' : '⚠ Unverified'}
+                        </div>
+                    </div>
                 </div>
             `).join('');
-        }
-
-        function drawBBoxes(imageUrl, facts) {
-            const container = document.getElementById('imageContainer');
-            const img = document.getElementById('previewImage');
-            const noImage = document.getElementById('noImage');
-
-            // Remove old overlays
-            container.querySelectorAll('.bbox-overlay').forEach(el => el.remove());
-
-            if (!imageUrl) {
-                img.classList.add('hidden');
-                noImage.classList.remove('hidden');
-                return;
-            }
-
-            img.src = imageUrl;
-            img.onload = () => {
-                img.classList.remove('hidden');
-                noImage.classList.add('hidden');
-
-                facts.forEach(fact => {
-                    if (fact.source?.bbox) {
-                        const bbox = fact.source.bbox;
-                        const overlay = document.createElement('div');
-                        overlay.className = 'bbox-overlay';
-                        overlay.style.left = (bbox.x * img.width) + 'px';
-                        overlay.style.top = (bbox.y * img.height) + 'px';
-                        overlay.style.width = (bbox.width * img.width) + 'px';
-                        overlay.style.height = (bbox.height * img.height) + 'px';
-                        overlay.title = `${fact.kind}: ${fact.raw_value} (conf: ${(fact.confidence*100).toFixed(0)}%)`;
-                        container.appendChild(overlay);
-                    }
-                });
-            };
         }
 
         async function uploadLetter() {
@@ -258,14 +1259,14 @@
             const language = document.getElementById('langSelect').value;
 
             if (!fileInput.files[0] && !textInput.value.trim()) {
-                alert('Please select a file or paste text');
+                alert('Please select a letter image/PDF or paste text.');
                 return;
             }
 
-            clearEvents();
+            eventCount = 0;
+            document.getElementById('consoleLog').innerHTML = '';
             document.getElementById('jsonOutput').textContent = '{}';
-            document.getElementById('factList').innerHTML = 'Processing...';
-            setStatus('Uploading...', 'status-reading');
+            updateStatus('Uploading...', '#FEF3C7', '#92400E');
 
             const formData = new FormData();
             if (fileInput.files[0]) formData.append('file', fileInput.files[0]);
@@ -274,159 +1275,87 @@
             formData.append('language', language);
 
             try {
-                const resp = await fetch('/api/letters', {
-                    method: 'POST',
-                    body: formData,
-                });
+                const resp = await fetch('/api/letters', { method: 'POST', body: formData });
                 const data = await resp.json();
                 currentLetterId = data.id;
-                setStatus('Reading...', 'status-reading');
+                updateStatus('Reading Stream...', '#DBEAFE', '#1E40AF');
                 connectSSE(currentLetterId);
             } catch (err) {
                 console.error(err);
-                setStatus('Error', 'status-error');
+                updateStatus('Error', '#FEE2E2', '#991B1B');
             }
         }
 
-        async function runSample(example = 'routine') {
-            clearEvents();
+        async function runSample(sampleName) {
+            eventCount = 0;
+            document.getElementById('consoleLog').innerHTML = '';
             document.getElementById('jsonOutput').textContent = '{}';
-            document.getElementById('factList').innerHTML = 'Loading sample...';
-            setStatus('Loading sample...', 'status-reading');
+            updateStatus(`Running Sample (${sampleName})...`, '#DBEAFE', '#1E40AF');
 
             try {
-                // For mock mode, we use a special endpoint or pass a parameter
-                // Here we'll just call the API with a special flag
                 const resp = await fetch('/api/letters', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        text: `SAMPLE:${example}`,
-                        country: 'XX',
-                        language: 'en',
-                    }),
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ text: `SAMPLE:${sampleName}`, country: 'XX', language: 'en' })
                 });
                 const data = await resp.json();
                 currentLetterId = data.id;
-                setStatus('Processing sample...', 'status-reading');
                 connectSSE(currentLetterId);
             } catch (err) {
                 console.error(err);
-                setStatus('Error', 'status-error');
+                updateStatus('Error', '#FEE2E2', '#991B1B');
             }
         }
 
         function connectSSE(letterId) {
-            if (eventSource) {
-                eventSource.close();
-            }
+            if (eventSource) eventSource.close();
 
-            const url = `/api/letters/${letterId}/events`;
-            eventSource = new EventSource(url);
+            eventSource = new EventSource(`/api/letters/${letterId}/events`);
 
-            eventSource.onmessage = (e) => {
-                // Heartbeat
-            };
-
-            eventSource.addEventListener('stage', (e) => {
-                const data = JSON.parse(e.data);
-                addEvent({id: e.lastEventId || 'evt', event: 'stage', data});
-            });
-
-            eventSource.addEventListener('facts', (e) => {
-                const data = JSON.parse(e.data);
-                addEvent({id: e.lastEventId || 'evt', event: 'facts', data});
-                showFacts(data.facts);
-                // Try to load image
-                loadImage(letterId);
-            });
-
-            eventSource.addEventListener('classification', (e) => {
-                const data = JSON.parse(e.data);
-                addEvent({id: e.lastEventId || 'evt', event: 'classification', data});
-            });
-
-            eventSource.addEventListener('deadline', (e) => {
-                const data = JSON.parse(e.data);
-                addEvent({id: e.lastEventId || 'evt', event: 'deadline', data});
-            });
-
-            eventSource.addEventListener('severity', (e) => {
-                const data = JSON.parse(e.data);
-                addEvent({id: e.lastEventId || 'evt', event: 'severity', data});
-            });
-
-            eventSource.addEventListener('verdict', (e) => {
-                const data = JSON.parse(e.data);
-                addEvent({id: e.lastEventId || 'evt', event: 'verdict', data});
-            });
-
-            eventSource.addEventListener('explanation', (e) => {
-                const data = JSON.parse(e.data);
-                addEvent({id: e.lastEventId || 'evt', event: 'explanation', data});
-            });
-
-            eventSource.addEventListener('steps', (e) => {
-                const data = JSON.parse(e.data);
-                addEvent({id: e.lastEventId || 'evt', event: 'steps', data});
-            });
-
-            eventSource.addEventListener('checklist', (e) => {
-                const data = JSON.parse(e.data);
-                addEvent({id: e.lastEventId || 'evt', event: 'checklist', data});
-            });
-
-            eventSource.addEventListener('big_print', (e) => {
-                const data = JSON.parse(e.data);
-                addEvent({id: e.lastEventId || 'evt', event: 'big_print', data});
-            });
-
-            eventSource.addEventListener('warning', (e) => {
-                const data = JSON.parse(e.data);
-                addEvent({id: e.lastEventId || 'evt', event: 'warning', data});
+            ['stage', 'facts', 'classification', 'deadline', 'severity', 'verdict', 'explanation', 'steps', 'checklist', 'big_print', 'warning'].forEach(evt => {
+                eventSource.addEventListener(evt, (e) => {
+                    const data = JSON.parse(e.data);
+                    addLog(e.lastEventId || 'evt', evt, data);
+                    if (evt === 'facts') renderFacts(data.facts);
+                });
             });
 
             eventSource.addEventListener('done', (e) => {
                 const data = JSON.parse(e.data);
-                addEvent({id: e.lastEventId || 'evt', event: 'done', data});
+                addLog(e.lastEventId || 'evt', 'done', data);
                 document.getElementById('jsonOutput').textContent = JSON.stringify(data, null, 2);
-                setStatus('Ready', 'status-ready');
+                updateStatus('Ready', '#DCFCE7', '#166534');
                 eventSource.close();
             });
 
             eventSource.addEventListener('error', (e) => {
-                const data = JSON.parse(e.data);
-                addEvent({id: e.lastEventId || 'evt', event: 'error', data});
-                setStatus('Error', 'status-error');
+                updateStatus('Error', '#FEE2E2', '#991B1B');
                 eventSource.close();
             });
-
-            eventSource.onerror = () => {
-                setStatus('Connection lost', 'status-error');
-                eventSource.close();
-            };
         }
 
-        async function loadImage(letterId) {
-            try {
-                const resp = await fetch(`/api/letters/${letterId}/image`);
-                if (resp.ok) {
-                    const blob = await resp.blob();
-                    const url = URL.createObjectURL(blob);
-                    // Will be drawn when facts arrive
-                    window.currentImageUrl = url;
+        function copyJSON() {
+            const text = document.getElementById('jsonOutput').textContent;
+            navigator.clipboard.writeText(text);
+            alert('JSON copied to clipboard!');
+        }
+
+        // Check Health
+        fetch('/api/health')
+            .then(r => r.json())
+            .then(h => {
+                const el = document.getElementById('headerEngineStatus');
+                if (h.engine_mode === 'mock') {
+                    el.textContent = 'Engine: Ready (Mock Mode)';
+                } else if (h.status === 'ok') {
+                    el.textContent = 'Engine: Ready (Local Ollama)';
+                } else {
+                    el.textContent = 'Engine: Offline / Degraded';
                 }
-            } catch (err) {
-                console.log('No image available');
-            }
-        }
-
-        // Check if mock mode
-        fetch('/api/health').then(r => r.json()).then(h => {
-            if (h.engine_mode === 'mock') {
-                document.getElementById('btnSample').textContent = 'Run Sample (mock mode)';
-            }
-        });
+            })
+            .catch(() => {
+                document.getElementById('headerEngineStatus').textContent = 'Engine: Disconnected';
+            });
     </script>
 </body>
 </html>

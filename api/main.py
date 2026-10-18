@@ -70,6 +70,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Serve Dev UI at root
+@app.get("/")
+async def root():
+    return FileResponse("dev-ui/index.html")
+
+
 # Mount dev UI
 app.mount("/dev-ui", StaticFiles(directory="dev-ui", html=True), name="dev-ui")
 
