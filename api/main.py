@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import uuid
@@ -29,6 +30,15 @@ from engine.pipeline import LetterDecoderPipeline
 pipeline: LetterDecoderPipeline | None = None
 letter_store: dict[str, Answer] = {}
 letter_samples: dict[str, str] = {}
+letter_queues: dict[str, asyncio.Queue] = {}
+letter_logs: dict[str, list[dict]] = {}
+
+SSE_DONE_EVENTS = ("done", "error")
+
+
+def _sse_format(event: dict) -> str:
+    payload = json.dumps(event["data"], default=str)
+    return f"id: {event['id']}\nevent: {event['event']}\ndata: {payload}\n\n"
 
 
 @asynccontextmanager
@@ -72,14 +82,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve Dev UI at root
+# Serve Dev UI at root (path resolved relative to repo root, cwd-independent)
+DEV_UI_DIR = Path(__file__).resolve().parent.parent / "dev-ui"
+
+
 @app.get("/")
 async def root():
-    return FileResponse("dev-ui/index.html")
+    return FileResponse(DEV_UI_DIR / "index.html")
 
 
 # Mount dev UI
-app.mount("/dev-ui", StaticFiles(directory="dev-ui", html=True), name="dev-ui")
+app.mount("/dev-ui", StaticFiles(directory=DEV_UI_DIR, html=True), name="dev-ui")
 
 
 class LetterUploadResponse(BaseModel):
@@ -111,7 +124,7 @@ async def health_check():
 
                 client = ollama.Client(host=pipeline.ollama_host)
                 models = client.list()
-                model_names = [m["name"] for m in models.get("models", [])]
+                model_names = [m.model for m in models.get("models", [])]
                 ollama_connected = True
                 model_available = pipeline.model_name in model_names
             except Exception:
@@ -144,6 +157,7 @@ async def upload_letter(
 
     letter_id = uuid.uuid4().hex[:12]
     letter_samples[letter_id] = sample
+    letter_queues[letter_id] = asyncio.Queue()
 
     # Save file if provided
     file_path = None
@@ -163,8 +177,6 @@ async def upload_letter(
     letter_store[letter_id] = answer
 
     # Start background processing
-    import asyncio
-
     asyncio.create_task(_process_letter(letter_id, file_path, text, country, language))
 
     return LetterUploadResponse(id=letter_id)
@@ -177,38 +189,65 @@ async def _process_letter(
     country: str,
     language: str,
 ):
-    """Background task to process letter and update store."""
+    """Background task: run the pipeline and publish every SSE event to the queue."""
     global pipeline
     if not pipeline:
         return
 
-    # Mock mode with a named sample: load the canned answer directly
+    queue = letter_queues.setdefault(letter_id, asyncio.Queue())
     sample = letter_samples.get(letter_id)
-    if pipeline.engine_mode == "mock" and sample:
-        try:
-            example = pipeline.load_mock_example(sample)
-            example.id = letter_id
-            letter_store[letter_id] = example
-        except ValueError:
-            pass
-        return
-
     answer = letter_store[letter_id]
     answer.status = AnswerStatus.READING
 
+    # Mock mode streams a canned example; real mode runs the full pipeline
+    if pipeline.engine_mode == "mock":
+        example_name = sample or "routine"
+        try:
+            pipeline.load_mock_example(example_name)
+        except ValueError:
+            stream = None
+            error_event = {
+                "id": uuid.uuid4().hex[:8],
+                "event": "error",
+                "data": {
+                    "code": "unknown_example",
+                    "message": f"Mock example not found: {example_name}",
+                    "retryable": False,
+                },
+            }
+            answer.status = AnswerStatus.ERROR
+            letter_logs[letter_id] = [error_event]
+            await queue.put(error_event)
+            return
+        stream = pipeline.process_mock(example_name)
+    else:
+        stream = pipeline.process(file_path, text, country, language)
+
+    events_log: list[dict] = []
     try:
-        async for event in pipeline.process(file_path, text, country, language):
-            # Update answer with latest data
+        async for event in stream:
             if event["event"] == "done":
-                final_data = event["data"]
-                answer = Answer(**final_data)
-                letter_store[letter_id] = answer
+                data = dict(event["data"])
+                data["id"] = letter_id
+                event = {**event, "data": data}
+                letter_store[letter_id] = Answer(**data)
             elif event["event"] == "error":
-                answer.status = AnswerStatus.ERROR
-                letter_store[letter_id] = answer
-    except Exception:
-        answer.status = AnswerStatus.ERROR
-        letter_store[letter_id] = answer
+                letter_store[letter_id].status = AnswerStatus.ERROR
+            events_log.append(event)
+            await queue.put(event)
+            if event["event"] in SSE_DONE_EVENTS:
+                break
+    except Exception as e:  # noqa: BLE001 - publish typed error to the stream
+        event = {
+            "id": uuid.uuid4().hex[:8],
+            "event": "error",
+            "data": {"code": "internal", "message": str(e), "retryable": True},
+        }
+        events_log.append(event)
+        letter_store[letter_id].status = AnswerStatus.ERROR
+        await queue.put(event)
+    finally:
+        letter_logs[letter_id] = events_log
 
 
 # SSE events stream
@@ -221,27 +260,33 @@ async def letter_events(letter_id: str, request: Request):
     answer = letter_store[letter_id]
 
     async def event_generator():
-        if pipeline and pipeline.engine_mode == "mock":
-            example_name = letter_samples.get(letter_id) or "routine"
-            async for event in pipeline.process_mock(example_name):
+        # Completed letter: replay the recorded event log (repeat connections)
+        log = letter_logs.get(letter_id)
+        if log is None and answer.status in (AnswerStatus.READY, AnswerStatus.ERROR):
+            log = _replay_events(answer) if answer.status == AnswerStatus.READY else []
+        if log is not None:
+            for event in log:
                 if await request.is_disconnected():
                     break
-                payload = json.dumps(event["data"], default=str)
-                yield f"id: {event['id']}\nevent: {event['event']}\ndata: {payload}\n\n"
-        else:
-            # For real mode, events are generated during processing
-            # This is a simplified replay - in production, use a proper event bus
-            if answer.status == AnswerStatus.READY:
-                # Replay from stored answer
-                events = _replay_events(answer)
-                for event in events:
-                    if await request.is_disconnected():
-                        break
-                    payload = json.dumps(event["data"], default=str)
-                    yield f"id: {event['id']}\nevent: {event['event']}\ndata: {payload}\n\n"
-            else:
-                # Still processing - send heartbeat
+                yield _sse_format(event)
+            return
+
+        # Still processing: tail the live queue with heartbeats
+        queue = letter_queues.get(letter_id)
+        if queue is None:
+            yield ": heartbeat\n\n"
+            return
+        while True:
+            if await request.is_disconnected():
+                break
+            try:
+                event = await asyncio.wait_for(queue.get(), timeout=15.0)
+            except asyncio.TimeoutError:
                 yield ": heartbeat\n\n"
+                continue
+            yield _sse_format(event)
+            if event["event"] in SSE_DONE_EVENTS:
+                break
 
     return StreamingResponse(
         event_generator(),
