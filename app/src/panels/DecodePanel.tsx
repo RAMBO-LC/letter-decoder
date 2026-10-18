@@ -40,6 +40,7 @@ export function DecodePanel() {
   const [showJson, setShowJson] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
+  const terminalRef = useRef(false);
 
   useEffect(() => {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
@@ -73,6 +74,7 @@ export function DecodePanel() {
     setDoneSteps(new Set());
     setDrafts({});
     setShowJson(false);
+    terminalRef.current = false;
 
     try {
       const { id } = await uploadLetter({ file, text, country, language, sample: sample ?? undefined });
@@ -92,12 +94,14 @@ export function DecodePanel() {
             pushLog("error", `ERROR ${d.code ?? ""}: ${d.message ?? "unknown"}`);
             setError(d.message ?? "Processing failed");
             setBusy(false);
+            terminalRef.current = true;
           } else if (event === "done") {
             const d = data as unknown as Answer;
             setAnswer(d);
             setProgress(100);
             pushLog("event", "DONE");
             setBusy(false);
+            terminalRef.current = true;
             es.close();
           } else {
             const env: Partial<SSEEnvelope> = { event, data: data as Record<string, unknown> };
@@ -106,7 +110,10 @@ export function DecodePanel() {
           }
         },
         () => {
-          pushLog("error", "SSE CONNECTION CLOSED");
+          // Server closes the stream after done/error — that's expected
+          if (!terminalRef.current) {
+            pushLog("error", "SSE CONNECTION CLOSED");
+          }
           setBusy(false);
         },
       );

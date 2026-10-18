@@ -20,9 +20,17 @@ class ImageData:
     height: int
 
 
+# Raster formats OpenCV can read; PDFs and anything else skip preprocessing
+# and go straight to extract_text (PDF text layer / render-and-OCR).
+IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".bmp", ".webp"}
+
+
 async def preprocess_image(file_path: Path | None) -> ImageData | None:
-    """Preprocess image: deskew, denoise, crop."""
+    """Preprocess image: deskew, denoise, crop. No-op for PDFs/non-images."""
     if not file_path or not file_path.exists():
+        return None
+
+    if file_path.suffix.lower() not in IMAGE_SUFFIXES:
         return None
 
     # Run in thread pool to avoid blocking

@@ -69,6 +69,17 @@ async def _extract_pdf(file_path: Path) -> ExtractedText:
     )
 
 
+def _require_tesseract() -> None:
+    """Fail with a clear message instead of a crash when OCR is unavailable."""
+    try:
+        pytesseract.get_tesseract_version()
+    except Exception as e:
+        raise ValueError(
+            "OCR unavailable: tesseract binary not found. "
+            "Install it (e.g. brew install tesseract) or provide a PDF with a text layer."
+        ) from e
+
+
 def _extract_pdf_text(file_path: Path) -> dict:
     """Extract text from PDF text layer."""
     doc = fitz.open(file_path)
@@ -113,6 +124,7 @@ def _extract_pdf_text(file_path: Path) -> dict:
 
 def _ocr_pdf(file_path: Path) -> dict:
     """OCR PDF by rendering pages to images."""
+    _require_tesseract()
     doc = fitz.open(file_path)
     pages = []
     full_text = []
@@ -156,6 +168,7 @@ def _ocr_pdf(file_path: Path) -> dict:
 
 async def _extract_image(file_path: Path, image_data: Any | None) -> ExtractedText:
     """Extract text from image using OCR."""
+    _require_tesseract()
     loop = asyncio.get_event_loop()
 
     if image_data is not None:
