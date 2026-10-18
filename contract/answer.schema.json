@@ -1,0 +1,877 @@
+{
+  "$defs": {
+    "AnswerStatus": {
+      "enum": [
+        "queued",
+        "reading",
+        "ready",
+        "error"
+      ],
+      "title": "AnswerStatus",
+      "type": "string"
+    },
+    "BigPrint": {
+      "additionalProperties": false,
+      "description": "Large-print summary lines.",
+      "properties": {
+        "lines": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 3,
+          "title": "Lines",
+          "type": "array"
+        }
+      },
+      "title": "BigPrint",
+      "type": "object"
+    },
+    "BoundingBox": {
+      "additionalProperties": false,
+      "description": "Normalized bounding box (0-1).",
+      "properties": {
+        "x": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Y",
+          "type": "number"
+        },
+        "width": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Width",
+          "type": "number"
+        },
+        "height": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Height",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "width",
+        "height"
+      ],
+      "title": "BoundingBox",
+      "type": "object"
+    },
+    "ChecklistItem": {
+      "additionalProperties": false,
+      "description": "Document to gather.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "ChecklistItem",
+      "type": "object"
+    },
+    "ClarifyingQuestion": {
+      "additionalProperties": false,
+      "description": "Single clarifying question with chip options.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "options": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 5,
+          "minItems": 2,
+          "title": "Options",
+          "type": "array"
+        }
+      },
+      "required": [
+        "text",
+        "options"
+      ],
+      "title": "ClarifyingQuestion",
+      "type": "object"
+    },
+    "Classification": {
+      "additionalProperties": false,
+      "description": "Letter classification result.",
+      "properties": {
+        "notice_type_id": {
+          "title": "Notice Type Id",
+          "type": "string"
+        },
+        "country": {
+          "title": "Country",
+          "type": "string"
+        },
+        "language": {
+          "title": "Language",
+          "type": "string"
+        },
+        "sender": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sender"
+        },
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "top_candidates": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Top Candidates",
+          "type": "array"
+        }
+      },
+      "required": [
+        "notice_type_id",
+        "country",
+        "language",
+        "confidence"
+      ],
+      "title": "Classification",
+      "type": "object"
+    },
+    "Deadline": {
+      "additionalProperties": false,
+      "description": "Deadline information.",
+      "properties": {
+        "fact_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fact Id"
+        },
+        "kind": {
+          "$ref": "#/$defs/DeadlineKind",
+          "default": "unknown"
+        },
+        "iso_date": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Iso Date"
+        },
+        "confidence": {
+          "default": 0.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        }
+      },
+      "title": "Deadline",
+      "type": "object"
+    },
+    "DeadlineKind": {
+      "enum": [
+        "response",
+        "payment",
+        "appeal",
+        "other",
+        "unknown"
+      ],
+      "title": "DeadlineKind",
+      "type": "string"
+    },
+    "DraftReplies": {
+      "additionalProperties": false,
+      "description": "Reply drafts in different tones.",
+      "properties": {
+        "neutral": {
+          "title": "Neutral",
+          "type": "string"
+        },
+        "polite": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Polite"
+        },
+        "firm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Firm"
+        }
+      },
+      "required": [
+        "neutral"
+      ],
+      "title": "DraftReplies",
+      "type": "object"
+    },
+    "Explanation": {
+      "additionalProperties": false,
+      "description": "Plain-language explanation.",
+      "properties": {
+        "simple": {
+          "title": "Simple",
+          "type": "string"
+        },
+        "detailed": {
+          "title": "Detailed",
+          "type": "string"
+        }
+      },
+      "required": [
+        "simple",
+        "detailed"
+      ],
+      "title": "Explanation",
+      "type": "object"
+    },
+    "Fact": {
+      "additionalProperties": false,
+      "description": "A deterministic fact extracted from the letter.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/FactKind"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "raw_value": {
+          "title": "Raw Value",
+          "type": "string"
+        },
+        "normalized_value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Normalized Value"
+        },
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "verified": {
+          "default": false,
+          "title": "Verified",
+          "type": "boolean"
+        },
+        "source": {
+          "$ref": "#/$defs/SourceSpan"
+        },
+        "verification": {
+          "$ref": "#/$defs/VerificationStatus",
+          "default": "UNCERTAIN"
+        },
+        "role": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Role"
+        }
+      },
+      "required": [
+        "kind",
+        "label",
+        "raw_value",
+        "confidence",
+        "source"
+      ],
+      "title": "Fact",
+      "type": "object"
+    },
+    "FactKind": {
+      "enum": [
+        "date",
+        "amount",
+        "reference",
+        "sender",
+        "other"
+      ],
+      "title": "FactKind",
+      "type": "string"
+    },
+    "Meta": {
+      "additionalProperties": false,
+      "description": "Metadata about the processing run.",
+      "properties": {
+        "engine_version": {
+          "title": "Engine Version",
+          "type": "string"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        },
+        "offline": {
+          "default": true,
+          "title": "Offline",
+          "type": "boolean"
+        },
+        "timings_ms": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Timings Ms",
+          "type": "object"
+        }
+      },
+      "required": [
+        "engine_version",
+        "model"
+      ],
+      "title": "Meta",
+      "type": "object"
+    },
+    "Severity": {
+      "additionalProperties": false,
+      "description": "Severity assessment.",
+      "properties": {
+        "level": {
+          "$ref": "#/$defs/SeverityLevel",
+          "default": "unknown"
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        },
+        "confidence": {
+          "default": 0.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        }
+      },
+      "title": "Severity",
+      "type": "object"
+    },
+    "SeverityLevel": {
+      "enum": [
+        "routine",
+        "act_soon",
+        "see_professional",
+        "unknown"
+      ],
+      "title": "SeverityLevel",
+      "type": "string"
+    },
+    "SourceInfo": {
+      "additionalProperties": false,
+      "description": "Identity of the source document an answer was computed from.",
+      "properties": {
+        "filename": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Filename"
+        },
+        "sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sha256"
+        },
+        "bytes": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bytes"
+        },
+        "chars": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Chars"
+        },
+        "preview": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Preview"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Method"
+        }
+      },
+      "title": "SourceInfo",
+      "type": "object"
+    },
+    "SourceSpan": {
+      "additionalProperties": false,
+      "description": "Source location in the original document.",
+      "properties": {
+        "page": {
+          "minimum": 1,
+          "title": "Page",
+          "type": "integer"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "bbox": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BoundingBox"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "page",
+        "text"
+      ],
+      "title": "SourceSpan",
+      "type": "object"
+    },
+    "Step": {
+      "additionalProperties": false,
+      "description": "Next step for the user.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "detail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        },
+        "fact_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Fact Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "Step",
+      "type": "object"
+    },
+    "TrustAssessment": {
+      "additionalProperties": false,
+      "description": "Whether it is safe to act on the letter's demands as written.",
+      "properties": {
+        "sender_claimed": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sender Claimed"
+        },
+        "sender_verified": {
+          "default": false,
+          "title": "Sender Verified",
+          "type": "boolean"
+        },
+        "payment_instructions_present": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Payment Instructions Present"
+        },
+        "verify_before_payment": {
+          "default": false,
+          "title": "Verify Before Payment",
+          "type": "boolean"
+        },
+        "scam_pressure": {
+          "default": false,
+          "title": "Scam Pressure",
+          "type": "boolean"
+        },
+        "reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        }
+      },
+      "title": "TrustAssessment",
+      "type": "object"
+    },
+    "Verdict": {
+      "additionalProperties": false,
+      "description": "One-line verdict.",
+      "properties": {
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "confidence": {
+          "default": 0.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "Verdict",
+      "type": "object"
+    },
+    "VerificationStatus": {
+      "description": "Evidence status of a fact against the source document.",
+      "enum": [
+        "SUPPORTED",
+        "UNCERTAIN",
+        "NOT_FOUND"
+      ],
+      "title": "VerificationStatus",
+      "type": "string"
+    },
+    "Warning": {
+      "additionalProperties": false,
+      "description": "Warning or notice about the analysis.",
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "bbox": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BoundingBox"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "Warning",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Complete answer card for a processed official letter",
+  "properties": {
+    "schema_version": {
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/AnswerStatus",
+      "default": "queued"
+    },
+    "facts": {
+      "items": {
+        "$ref": "#/$defs/Fact"
+      },
+      "title": "Facts",
+      "type": "array"
+    },
+    "classification": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Classification"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "deadline": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Deadline"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "severity": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Severity"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "verdict": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Verdict"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "explanation": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Explanation"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "steps": {
+      "items": {
+        "$ref": "#/$defs/Step"
+      },
+      "title": "Steps",
+      "type": "array"
+    },
+    "checklist": {
+      "items": {
+        "$ref": "#/$defs/ChecklistItem"
+      },
+      "title": "Checklist",
+      "type": "array"
+    },
+    "draft_replies": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DraftReplies"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "big_print": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BigPrint"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "clarifying_question": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ClarifyingQuestion"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "warnings": {
+      "items": {
+        "$ref": "#/$defs/Warning"
+      },
+      "title": "Warnings",
+      "type": "array"
+    },
+    "meta": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Meta"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "source": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SourceInfo"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "trust": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TrustAssessment"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "title": "Letter Decoder Answer",
+  "type": "object",
+  "$id": "https://letter-decoder.local/schema/answer.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

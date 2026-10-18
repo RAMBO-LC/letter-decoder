@@ -11,7 +11,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 ANSWER_SCHEMA_VERSION = "0.1.0"
 
@@ -22,6 +22,14 @@ class FactKind(str, Enum):
     REFERENCE = "reference"
     SENDER = "sender"
     OTHER = "other"
+
+
+class VerificationStatus(str, Enum):
+    """Evidence status of a fact against the source document."""
+
+    SUPPORTED = "SUPPORTED"
+    UNCERTAIN = "UNCERTAIN"
+    NOT_FOUND = "NOT_FOUND"
 
 
 class SeverityLevel(str, Enum):
@@ -83,6 +91,43 @@ class Fact(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
     verified: bool = False
     source: SourceSpan
+    verification: VerificationStatus = VerificationStatus.UNCERTAIN
+    role: str | None = None
+
+    @model_validator(mode="after")
+    def _sync_verification(self) -> Fact:
+        if "verification" not in self.model_fields_set:
+            self.verification = (
+                VerificationStatus.SUPPORTED
+                if self.verified
+                else VerificationStatus.UNCERTAIN
+            )
+        self.verified = self.verification == VerificationStatus.SUPPORTED
+        return self
+
+
+class SourceInfo(BaseModel):
+    """Identity of the source document an answer was computed from."""
+
+    model_config = ConfigDict(extra="forbid")
+    filename: str | None = None
+    sha256: str | None = None
+    bytes: int | None = None
+    chars: int | None = None
+    preview: str | None = None
+    method: str | None = None
+
+
+class TrustAssessment(BaseModel):
+    """Whether it is safe to act on the letter's demands as written."""
+
+    model_config = ConfigDict(extra="forbid")
+    sender_claimed: str | None = None
+    sender_verified: bool = False
+    payment_instructions_present: bool | None = None
+    verify_before_payment: bool = False
+    scam_pressure: bool = False
+    reasons: list[str] = Field(default_factory=list)
 
 
 class Classification(BaseModel):
@@ -216,6 +261,8 @@ class Answer(BaseModel):
     clarifying_question: ClarifyingQuestion | None = None
     warnings: list[Warning] = Field(default_factory=list)
     meta: Meta | None = None
+    source: SourceInfo | None = None
+    trust: TrustAssessment | None = None
 
 
 class ErrorResponse(BaseModel):

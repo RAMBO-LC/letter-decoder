@@ -1,127 +1,167 @@
-"""Verifier: check LLM output against deterministic facts."""
+"""Verifier: check generated content against source-backed deterministic facts."""
 
 from __future__ import annotations
 
-from contract.models import Answer, Fact, Warning
+import re
+
+import dateparser
+
+from contract.models import Answer, Fact, Warning, VerificationStatus
+
+# Dates written in generated text: ISO, numeric, or day-month-year word forms.
+# ISO is matched separately and taken verbatim - re-parsing it with a locale
+# date order would corrupt the month/day.
+_ISO_DATE_PATTERN = r"\b(\d{4}-\d{2}-\d{2})\b"
+_DATE_PATTERNS = [
+    r"\b(\d{1,2}[\s/-]\d{1,2}[\s/-]\d{2,4})\b",
+    r"\b(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{2,4})\b",
+    r"\b(\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{2,4})\b",
+    r"\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{2,4})\b",
+]
+
+# Amounts only count when currency is adjacent; bare digits ("12", "90") are
+# not money and must never trigger a mismatch warning. The lookbehind stops a
+# 4+-digit number from being re-matched from its second digit (e.g. "200.00"
+# inside "1200.00").
+_AMOUNT_PATTERNS = [
+    r"(?:₹|Rs\.?|INR)\s*(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?|\d{1,3})",
+    r"(?<![\d.,])(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2}))\s*(?:INR|rupees?)",
+]
+
+_DEADLINE_ROLES = {"payment_deadline", "response_deadline", "appeal_deadline"}
+
+_PARSE_SETTINGS = {"PREFER_DATES_FROM": "future", "DATE_ORDER": "DMY"}
 
 
 async def verify_answer(answer: Answer, deterministic_facts: list[Fact]) -> list[Warning]:
-    """Verify LLM output against deterministic facts."""
-    warnings = []
+    """Verify generated text and deadline claims against supported facts."""
+    warnings: list[Warning] = []
+    seen: set[tuple[str, str]] = set()
 
-    # Create lookup maps
-    date_facts = {f.normalized_value: f for f in deterministic_facts if f.kind.value == "date"}
-    amount_facts = {f.normalized_value: f for f in deterministic_facts if f.kind.value == "amount"}
+    def add(code: str, message: str) -> None:
+        key = (code, message)
+        if key not in seen:
+            seen.add(key)
+            warnings.append(Warning(code=code, message=message))
 
-    # Check dates in explanation and steps
-    _check_dates_in_text(answer, date_facts, warnings)
-    _check_amounts_in_text(answer, amount_facts, warnings)
+    supported_dates = {
+        f.normalized_value
+        for f in deterministic_facts
+        if f.kind.value == "date"
+        and f.verification == VerificationStatus.SUPPORTED
+        and f.normalized_value
+    }
+    supported_amounts = {
+        f.normalized_value
+        for f in deterministic_facts
+        if f.kind.value == "amount"
+        and f.verification == VerificationStatus.SUPPORTED
+        and f.normalized_value
+    }
+    deadline_role_facts = [
+        f for f in deterministic_facts if f.role in _DEADLINE_ROLES and f.normalized_value
+    ]
 
-    # Check deadline consistency
+    _check_dates_in_text(_generated_texts(answer), supported_dates, add)
+    _check_amounts_in_text(_generated_texts(answer), supported_amounts, add)
+
     if answer.deadline and answer.deadline.iso_date:
-        if answer.deadline.iso_date not in date_facts:
-            warnings.append(
-                Warning(
-                    code="verifier_mismatch",
-                    message=f"Deadline date {answer.deadline.iso_date} not found in deterministic extraction",
-                )
+        if answer.deadline.iso_date not in supported_dates:
+            add(
+                "unsupported_deadline",
+                f"Deadline date {answer.deadline.iso_date} is not supported by the source document.",
             )
 
-    # Check for missing deadline warning
+    # Conflicting dates: two different dates in the same deadline role.
+    by_role: dict[str, set[str]] = {}
+    for f in deadline_role_facts:
+        by_role.setdefault(f.role or "", set()).add(f.normalized_value or "")
+    for role, isos in by_role.items():
+        if len(isos) > 1:
+            earliest = min(isos)
+            add(
+                "conflicting_deadlines",
+                "This letter contains conflicting dates for the "
+                f"{role.replace('_', ' ')}: {', '.join(sorted(isos))}. "
+                f"Treat {earliest} as a cautious planning assumption and verify the "
+                "correct date with the sender.",
+            )
+
     if not answer.deadline or not answer.deadline.iso_date:
-        # Check if any date facts exist but weren't used as deadline
-        if date_facts:
-            warnings.append(
-                Warning(
-                    code="no_deadline_found",
-                    message="No deadline detected in this letter. Dates were found but none matched deadline criteria.",
-                )
+        if supported_dates:
+            add(
+                "no_deadline_found",
+                "No explicit action deadline was found in this letter. "
+                "Dates appear in it but none is stated as a deadline for you.",
             )
 
     return warnings
 
 
-def _check_dates_in_text(answer: Answer, date_facts: dict, warnings: list[Warning]) -> None:
-    """Check if dates mentioned in LLM output exist in deterministic facts."""
-    # Check explanation
-    texts_to_check = []
+def _generated_texts(answer: Answer) -> list[str]:
+    """All text fields generated by the model or templates."""
+    texts: list[str] = []
     if answer.explanation:
-        texts_to_check.append(answer.explanation.simple)
-        texts_to_check.append(answer.explanation.detailed)
-
-    # Check steps
+        texts.append(answer.explanation.simple)
+        texts.append(answer.explanation.detailed)
     for step in answer.steps:
-        texts_to_check.append(step.text)
+        texts.append(step.text)
         if step.detail:
-            texts_to_check.append(step.detail)
-
-    # Check verdict
+            texts.append(step.detail)
     if answer.verdict:
-        texts_to_check.append(answer.verdict.text)
+        texts.append(answer.verdict.text)
+    if answer.big_print:
+        texts.extend(answer.big_print.lines)
+    if answer.draft_replies:
+        texts.append(answer.draft_replies.neutral)
+        if answer.draft_replies.polite:
+            texts.append(answer.draft_replies.polite)
+        if answer.draft_replies.firm:
+            texts.append(answer.draft_replies.firm)
+    return texts
 
-    import re
 
-    # Look for date patterns in text
-    date_patterns = [
-        r"\b(\d{4}-\d{2}-\d{2})\b",  # ISO
-        r"\b(\d{1,2}[\s/-]\d{1,2}[\s/-]\d{2,4})\b",
-        r"\b(\d{1,2}\s+\w+\s+\d{2,4})\b",
-    ]
-
-    for text in texts_to_check:
-        for pattern in date_patterns:
+def _check_dates_in_text(
+    texts: list[str], supported_dates: set[str], add
+) -> None:
+    for text in texts:
+        for match in re.finditer(_ISO_DATE_PATTERN, text):
+            iso_date = match.group(1)
+            if iso_date not in supported_dates:
+                add(
+                    "unsupported_date",
+                    f"Date '{iso_date}' appears in the generated explanation but "
+                    "not in the source document.",
+                )
+        for pattern in _DATE_PATTERNS:
             for match in re.finditer(pattern, text):
-                date_str = match.group(1)
-                # Try to normalize
-                from dateparser import parse
-
-                parsed = parse(date_str, settings={"PREFER_DATES_FROM": "future"})
-                if parsed:
-                    iso_date = parsed.strftime("%Y-%m-%d")
-                    if iso_date not in date_facts:
-                        warnings.append(
-                            Warning(
-                                code="verifier_mismatch",
-                                message=f"Date '{date_str}' in explanation not found in deterministic facts",
-                            )
-                        )
+                raw = match.group(1)
+                parsed = dateparser.parse(raw, settings=_PARSE_SETTINGS)
+                if not parsed:
+                    continue
+                iso_date = parsed.strftime("%Y-%m-%d")
+                if iso_date not in supported_dates:
+                    add(
+                        "unsupported_date",
+                        f"Date '{raw}' appears in the generated explanation but not "
+                        "in the source document.",
+                    )
 
 
-def _check_amounts_in_text(answer: Answer, amount_facts: dict, warnings: list[Warning]) -> None:
-    """Check if amounts mentioned in LLM output exist in deterministic facts."""
-    texts_to_check = []
-    if answer.explanation:
-        texts_to_check.append(answer.explanation.simple)
-        texts_to_check.append(answer.explanation.detailed)
-
-    for step in answer.steps:
-        texts_to_check.append(step.text)
-        if step.detail:
-            texts_to_check.append(step.detail)
-
-    if answer.verdict:
-        texts_to_check.append(answer.verdict.text)
-
-    import re
-
-    # Look for amount patterns (Indian currency)
-    amount_patterns = [
-        r"[₹Rs\.]*\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)",
-        r"(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*(?:INR|rupees?)",
-    ]
-
-    for text in texts_to_check:
-        for pattern in amount_patterns:
+def _check_amounts_in_text(
+    texts: list[str], supported_amounts: set[str], add
+) -> None:
+    for text in texts:
+        for pattern in _AMOUNT_PATTERNS:
             for match in re.finditer(pattern, text, re.IGNORECASE):
                 amount_str = match.group(1).replace(",", "")
                 try:
                     normalized = f"{float(amount_str):.2f} INR"
-                    if normalized not in amount_facts:
-                        warnings.append(
-                            Warning(
-                                code="verifier_mismatch",
-                                message=f"Amount '{match.group(0)}' in explanation not found in deterministic facts",
-                            )
-                        )
                 except ValueError:
-                    pass
+                    continue
+                if normalized not in supported_amounts:
+                    add(
+                        "unsupported_amount",
+                        f"Amount '{match.group(0).strip()}' appears in the generated "
+                        "explanation but not in the source document.",
+                    )
