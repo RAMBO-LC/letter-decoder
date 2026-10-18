@@ -97,7 +97,7 @@ async def root():
 
 
 # Mount dev UI
-app.mount("/dev-ui", StaticFiles(directory=DEV_UI_DIR, html=True), name="dev-ui")
+app.mount("/", StaticFiles(directory=DEV_UI_DIR, html=True), name="dev-ui")
 
 
 class LetterUploadResponse(BaseModel):
