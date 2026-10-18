@@ -1,0 +1,90 @@
+{
+  "schema_version": "0.1.0",
+  "id": "ex_nullbbox_001",
+  "created_at": "2024-11-01T10:00:00Z",
+  "updated_at": "2024-11-01T10:00:05Z",
+  "status": "ready",
+  "facts": [
+    {
+      "id": "fact_1",
+      "kind": "date",
+      "label": "Due date",
+      "raw_value": "15 Nov 2024",
+      "normalized_value": "2024-11-15",
+      "confidence": 0.9,
+      "verified": true,
+      "source": {
+        "page": 1,
+        "text": "Payment due by 15 Nov 2024",
+        "bbox": null
+      }
+    },
+    {
+      "id": "fact_2",
+      "kind": "amount",
+      "label": "Amount due",
+      "raw_value": "₹3,000",
+      "normalized_value": "3000.00 INR",
+      "confidence": 0.88,
+      "verified": true,
+      "source": {
+        "page": 1,
+        "text": "Amount: ₹3,000",
+        "bbox": null
+      }
+    }
+  ],
+  "classification": {
+    "notice_type_id": "in_municipal_water_bill",
+    "country": "IN",
+    "language": "en",
+    "sender": "Municipal Water Dept",
+    "confidence": 0.85,
+    "top_candidates": [
+      {"notice_type_id": "in_municipal_water_bill", "confidence": 0.85},
+      {"notice_type_id": "in_municipal_property_tax", "confidence": 0.1}
+    ]
+  },
+  "deadline": {
+    "fact_id": "fact_1",
+    "kind": "payment",
+    "iso_date": "2024-11-15",
+    "confidence": 0.85
+  },
+  "severity": {
+    "level": "routine",
+    "reason": "Water bill, standard payment",
+    "confidence": 0.8
+  },
+  "verdict": {
+    "text": "Municipal water bill for ₹3,000 due by 15 Nov.",
+    "confidence": 0.87
+  },
+  "explanation": {
+    "simple": "Your water bill is ₹3,000 due by 15 November.",
+    "detailed": "The Municipal Water Department has issued a bill for ₹3,000 due by 15 November 2024. This appears to be a routine water bill. Payment can be made online or at the municipal office."
+  },
+  "steps": [
+    {"id": "step_1", "text": "Pay ₹3,000 by 15 Nov", "detail": "Online or at municipal office", "fact_ids": ["fact_1", "fact_2"]},
+    {"id": "step_2", "text": "Save receipt", "detail": "For your records", "fact_ids": []},
+    {"id": "step_3", "text": "Check for auto-pay option", "detail": "Convenient for future bills", "fact_ids": []}
+  ],
+  "checklist": [
+    {"id": "chk_1", "text": "Water bill (this letter)"},
+    {"id": "chk_2", "text": "Previous payment receipt"}
+  ],
+  "draft_replies": {
+    "neutral": "Thank you for the water bill. I will pay ₹3,000 by 15 November 2024."
+  },
+  "big_print": {
+    "lines": ["Water bill ₹3,000", "Due 15 Nov 2024", "Pay online or at office"]
+  },
+  "clarifying_question": null,
+  "warnings": [],
+  "meta": {
+    "engine_version": "0.1.0",
+    "model": "qwen2.5:7b",
+    "offline": true,
+    "timings_ms": {"preprocess": 100, "extract_text": 600, "extract_facts": 35, "classify": 160, "explain": 1800, "verify": 25, "total": 2720}
+  }
+}

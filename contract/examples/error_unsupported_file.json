@@ -1,0 +1,5 @@
+{
+  "code": "unsupported_file",
+  "message": "File type not supported. Please upload an image (JPEG, PNG), PDF, or plain text.",
+  "retryable": false
+}

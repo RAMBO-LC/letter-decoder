@@ -1,0 +1,112 @@
+{
+  "schema_version": "0.1.0",
+  "id": "ex_seepx_001",
+  "created_at": "2024-11-01T10:00:00Z",
+  "updated_at": "2024-11-01T10:00:06Z",
+  "status": "ready",
+  "facts": [
+    {
+      "id": "fact_1",
+      "kind": "date",
+      "label": "Hearing date",
+      "raw_value": "20 Dec 2024",
+      "normalized_value": "2024-12-20",
+      "confidence": 0.88,
+      "verified": true,
+      "source": {
+        "page": 1,
+        "text": "Court hearing scheduled for 20 Dec 2024",
+        "bbox": {"x": 0.1, "y": 0.6, "width": 0.4, "height": 0.04}
+      }
+    },
+    {
+      "id": "fact_2",
+      "kind": "amount",
+      "label": "Claim amount",
+      "raw_value": "₹5,00,000",
+      "normalized_value": "500000.00 INR",
+      "confidence": 0.85,
+      "verified": true,
+      "source": {
+        "page": 1,
+        "text": "Claim: ₹5,00,000",
+        "bbox": {"x": 0.1, "y": 0.4, "width": 0.25, "height": 0.04}
+      }
+    },
+    {
+      "id": "fact_3",
+      "kind": "reference",
+      "label": "Case number",
+      "raw_value": "CS/2024/4521",
+      "normalized_value": "CS/2024/4521",
+      "confidence": 0.96,
+      "verified": true,
+      "source": {
+        "page": 1,
+        "text": "Case No: CS/2024/4521",
+        "bbox": {"x": 0.1, "y": 0.15, "width": 0.25, "height": 0.03}
+      }
+    }
+  ],
+  "classification": {
+    "notice_type_id": "in_civil_court_summons",
+    "country": "IN",
+    "language": "en",
+    "sender": "District Court",
+    "confidence": 0.87,
+    "top_candidates": [
+      {"notice_type_id": "in_civil_court_summons", "confidence": 0.87},
+      {"notice_type_id": "in_consumer_court_notice", "confidence": 0.1}
+    ]
+  },
+  "deadline": {
+    "fact_id": "fact_1",
+    "kind": "response",
+    "iso_date": "2024-12-20",
+    "confidence": 0.85
+  },
+  "severity": {
+    "level": "see_professional",
+    "reason": "Legal summons — requires qualified legal advice",
+    "confidence": 0.95
+  },
+  "verdict": {
+    "text": "Court summons for ₹5,00,000 claim. Hearing on 20 Dec. Consult a lawyer.",
+    "confidence": 0.88
+  },
+  "explanation": {
+    "simple": "You have received a civil court summons for a claim of ₹5,00,000. There is a hearing scheduled for 20 December 2024. This is a legal matter that requires professional legal advice.",
+    "detailed": "The District Court has issued a summons in Case No. CS/2024/4521. The plaintiff claims ₹5,00,000 from you. The first hearing is scheduled for 20 December 2024. You must file a written statement (written statement of defence) before the hearing date. This is a legal proceeding — do not ignore it. You should consult a qualified advocate immediately."
+  },
+  "steps": [
+    {"id": "step_1", "text": "Contact a qualified advocate immediately", "detail": "Civil litigation experience preferred", "fact_ids": []},
+    {"id": "step_2", "text": "Gather all relevant documents", "detail": "Contracts, correspondence, payment records", "fact_ids": ["fact_2", "fact_3"]},
+    {"id": "step_3", "text": "File written statement before 20 Dec", "detail": "Your lawyer will prepare and file this", "fact_ids": ["fact_1"]}
+  ],
+  "checklist": [
+    {"id": "chk_1", "text": "All contracts and agreements related to the claim"},
+    {"id": "chk_2", "text": "Payment records and receipts"},
+    {"id": "chk_3", "text": "Previous correspondence with the other party"},
+    {"id": "chk_4", "text": "Court summons copy (this letter)"}
+  ],
+  "draft_replies": {
+    "neutral": "I have received the court summons CS/2024/4521. I am engaging legal counsel and will file the appropriate response before the hearing date of 20 December 2024."
+  },
+  "big_print": {
+    "lines": ["Court summons", "₹5,00,000 claim", "SEE A LAWYER NOW"]
+  },
+  "clarifying_question": null,
+  "warnings": [
+    {
+      "code": "see_professional",
+      "message": "This is a legal matter. The AI explanation is not legal advice. Consult a qualified advocate.",
+      "bbox": null
+    }
+  ],
+  "meta": {
+    "engine_version": "0.1.0",
+    "model": "qwen2.5:7b",
+    "offline": true,
+    "timings_ms": {"preprocess": 130, "extract_text": 1100, "extract_facts": 55, "classify": 220, "explain": 2800, "verify": 40, "total": 4345}
+  }
+}

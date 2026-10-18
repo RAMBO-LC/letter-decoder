@@ -1,0 +1,5 @@
+{
+  "code": "model_unavailable",
+  "message": "Local LLM (Ollama) is not running or model not found. Start Ollama and pull the model, or use mock mode.",
+  "retryable": true
+}

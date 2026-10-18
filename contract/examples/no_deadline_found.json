@@ -1,0 +1,110 @@
+{
+  "schema_version": "0.1.0",
+  "id": "ex_nodeadline_001",
+  "created_at": "2024-11-01T10:00:00Z",
+  "updated_at": "2024-11-01T10:00:05Z",
+  "status": "ready",
+  "facts": [
+    {
+      "id": "fact_1",
+      "kind": "amount",
+      "label": "Insurance claim approved",
+      "raw_value": "₹75,000",
+      "normalized_value": "75000.00 INR",
+      "confidence": 0.94,
+      "verified": true,
+      "source": {
+        "page": 1,
+        "text": "Claim approved: ₹75,000",
+        "bbox": {"x": 0.1, "y": 0.35, "width": 0.3, "height": 0.04}
+      }
+    },
+    {
+      "id": "fact_2",
+      "kind": "reference",
+      "label": "Claim reference",
+      "raw_value": "INS/2024/11/0089",
+      "normalized_value": "INS/2024/11/0089",
+      "confidence": 0.98,
+      "verified": true,
+      "source": {
+        "page": 1,
+        "text": "Ref: INS/2024/11/0089",
+        "bbox": {"x": 0.1, "y": 0.15, "width": 0.3, "height": 0.03}
+      }
+    },
+    {
+      "id": "fact_3",
+      "kind": "sender",
+      "label": "Insurance company",
+      "raw_value": "National Insurance Co.",
+      "normalized_value": "National Insurance Co.",
+      "confidence": 0.96,
+      "verified": true,
+      "source": {
+        "page": 1,
+        "text": "National Insurance Co. Ltd.",
+        "bbox": {"x": 0.1, "y": 0.1, "width": 0.35, "height": 0.03}
+      }
+    }
+  ],
+  "classification": {
+    "notice_type_id": "in_insurance_claim_approved",
+    "country": "IN",
+    "language": "en",
+    "sender": "National Insurance Co.",
+    "confidence": 0.92,
+    "top_candidates": [
+      {"notice_type_id": "in_insurance_claim_approved", "confidence": 0.92},
+      {"notice_type_id": "in_insurance_claim_rejected", "confidence": 0.05}
+    ]
+  },
+  "deadline": {
+    "fact_id": null,
+    "kind": "unknown",
+    "iso_date": null,
+    "confidence": 0.0
+  },
+  "severity": {
+    "level": "routine",
+    "reason": "Good news — claim approved, no deadline pressure",
+    "confidence": 0.85
+  },
+  "verdict": {
+    "text": "National Insurance approved your claim for ₹75,000. No action deadline.",
+    "confidence": 0.9
+  },
+  "explanation": {
+    "simple": "Your insurance claim has been approved for ₹75,000. The letter confirms approval and states the amount will be credited to your account. No deadline or further action is required from you.",
+    "detailed": "National Insurance Co. Ltd. has approved your claim (Ref: INS/2024/11/0089) for ₹75,000. The letter states the amount will be transferred to your registered bank account within 7-10 working days. This is positive news — no response or payment is needed. Just ensure your bank details are up to date with the insurer."
+  },
+  "steps": [
+    {"id": "step_1", "text": "Verify bank account details", "detail": "Ensure insurer has correct account info", "fact_ids": []},
+    {"id": "step_2", "text": "Watch for credit in 7-10 days", "detail": "Check your bank statement", "fact_ids": ["fact_1"]},
+    {"id": "step_3", "text": "Save this letter", "detail": "For your records", "fact_ids": ["fact_2"]}
+  ],
+  "checklist": [
+    {"id": "chk_1", "text": "Bank account details on file with insurer"},
+    {"id": "chk_2", "text": "Claim reference: INS/2024/11/0089"}
+  ],
+  "draft_replies": {
+    "neutral": "Thank you for approving my claim INS/2024/11/0089 for ₹75,000. I confirm my bank details are current and will watch for the credit."
+  },
+  "big_print": {
+    "lines": ["Claim APPROVED", "₹75,000", "No action needed"]
+  },
+  "clarifying_question": null,
+  "warnings": [
+    {
+      "code": "no_deadline_found",
+      "message": "No deadline detected in this letter. This is normal for approval letters.",
+      "bbox": null
+    }
+  ],
+  "meta": {
+    "engine_version": "0.1.0",
+    "model": "qwen2.5:7b",
+    "offline": true,
+    "timings_ms": {"preprocess": 100, "extract_text": 800, "extract_facts": 40, "classify": 180, "explain": 1900, "verify": 30, "total": 3050}
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "code": "ocr_failed",
+  "message": "OCR could not extract text from the image. Try a clearer photo or paste the text directly.",
+  "retryable": true
+}

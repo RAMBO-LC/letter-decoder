@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Letter Decoder - Dev Harness</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.5;
+            background: #fafafa;
+        }
+        h1 { font-size: 1.5rem; margin-bottom: 1rem; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+        .panel {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .panel h2 { font-size: 1rem; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+        label { display: block; margin-bottom: 8px; font-weight: 500; }
+        input[type="file"], textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        textarea { min-height: 100px; resize: vertical; }
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-secondary { background: #e5e7eb; color: #1f2937; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-row { margin-top: 12px; }
+        pre {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 12px;
+            border-radius: 4px;
+            overflow: auto;
+            max-height: 400px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .event-log { max-height: 300px; overflow-y: auto; }
+        .event-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .event-item:last-child { border-bottom: none; }
+        .event-type { color: #2563eb; font-weight: bold; }
+        .event-id { color: #6b7280; }
+        .image-preview {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f9fafb;
+        }
+        .bbox-overlay {
+            position: absolute;
+            border: 2px solid #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+            pointer-events: none;
+        }
+        .image-container { position: relative; display: inline-block; max-width: 100%; }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-queued { background: #fef3c7; color: #92400e; }
+        .status-reading { background: #dbeafe; color: #1e40af; }
+        .status-ready { background: #dcfce7; color: #166534; }
+        .status-error { background: #fee2e2; color: #991b1b; }
+        .fact-list { display: grid; gap: 8px; }
+        .fact-item {
+            padding: 8px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .fact-kind { font-weight: 600; text-transform: capitalize; }
+        .fact-value { font-family: monospace; color: #374151; }
+        .fact-conf { color: #6b7280; font-size: 12px; }
+        .fact-verified { color: #166534; }
+        .fact-unverified { color: #991b1b; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <h1>Letter Decoder — Dev Harness</h1>
+    <p style="color: #6b7280; font-size: 14px;">
+        Test the engine API. Upload a file, paste text, or run a built-in sample.
+    </p>
+
+    <div class="grid">
+        <!-- Input Panel -->
+        <div class="panel">
+            <h2>Input</h2>
+
+            <label>Upload file (image, PDF)</label>
+            <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.pdf,.tiff,.bmp">
+
+            <label style="margin-top: 12px;">Or paste text</label>
+            <textarea id="textInput" placeholder="Paste letter text here..."></textarea>
+
+            <div style="display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;">
+                <label style="margin: 0; display: flex; align-items: center; gap: 4px;">
+                    Country: <select id="countrySelect"><option value="XX">XX (placeholder)</option><option value="IN">IN</option></select>
+                </label>
+                <label style="margin: 0; display: flex; align-items: center; gap: 4px;">
+                    Language: <select id="langSelect"><option value="en">en</option><option value="hi">hi</option></select>
+                </label>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-primary" id="btnUpload" onclick="uploadLetter()">Process Letter</button>
+                <button class="btn btn-secondary" id="btnSample" onclick="runSample()">Run Sample (routine)</button>
+                <button class="btn btn-secondary" onclick="runSample('act_soon')">Run Sample (act_soon)</button>
+                <button class="btn btn-secondary" onclick="runSample('see_professional')">Run Sample (see_professional)</button>
+                <button class="btn btn-secondary" onclick="runSample('low_confidence_blurry')">Run Sample (blurry)</button>
+                <button class="btn btn-secondary" onclick="runSample('no_deadline_found')">Run Sample (no deadline)</button>
+                <button class="btn btn-secondary" onclick="runSample('clarifying_question')">Run Sample (clarify)</button>
+            </div>
+
+            <div id="status" class="status-badge status-queued hidden">Status: Queued</div>
+        </div>
+
+        <!-- Image Preview Panel -->
+        <div class="panel">
+            <h2>Image Preview with BBoxes</h2>
+            <div class="image-container" id="imageContainer">
+                <img id="previewImage" class="image-preview hidden" alt="Letter preview">
+                <div id="noImage" style="color: #9ca3af; padding: 40px; text-align: center;">No image loaded</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Log & JSON Output -->
+    <div class="grid" style="margin-top: 20px;">
+        <div class="panel">
+            <h2>Event Log (SSE)</h2>
+            <div class="event-log" id="eventLog"></div>
+        </div>
+
+        <div class="panel">
+            <h2>Raw JSON Answer</h2>
+            <pre id="jsonOutput">{} // waiting for result</pre>
+        </div>
+    </div>
+
+    <!-- Extracted Facts -->
+    <div class="panel" style="margin-top: 20px;">
+        <h2>Extracted Facts (Deterministic)</h2>
+        <div class="fact-list" id="factList">No facts yet</div>
+    </div>
+
+    <script>
+        let currentLetterId = null;
+        let eventSource = null;
+
+        function setStatus(text, cls) {
+            const el = document.getElementById('status');
+            el.textContent = 'Status: ' + text;
+            el.className = 'status-badge ' + cls;
+            el.classList.remove('hidden');
+        }
+
+        function addEvent(event) {
+            const log = document.getElementById('eventLog');
+            const div = document.createElement('div');
+            div.className = 'event-item';
+            div.innerHTML = `<span class="event-id">[${event.id}]</span> <span class="event-type">${event.event}</span>: ${JSON.stringify(event.data).slice(0, 200)}${JSON.stringify(event.data).length > 200 ? '...' : ''}`;
+            log.appendChild(div);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function clearEvents() {
+            document.getElementById('eventLog').innerHTML = '';
+        }
+
+        function showFacts(facts) {
+            const container = document.getElementById('factList');
+            if (!facts || facts.length === 0) {
+                container.innerHTML = '<div style="color: #9ca3af;">No facts extracted</div>';
+                return;
+            }
+            container.innerHTML = facts.map(f => `
+                <div class="fact-item">
+                    <span class="fact-kind">${f.kind}</span>: <span class="fact-value">${f.label} = ${f.raw_value}</span>
+                    <span class="fact-conf">conf: ${(f.confidence * 100).toFixed(0)}%</span>
+                    <span class="${f.verified ? 'fact-verified' : 'fact-unverified'}">${f.verified ? '✓ verified' : '✗ unverified'}</span>
+                    ${f.source?.bbox ? `<br><small>bbox: ${JSON.stringify(f.source.bbox)}</small>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function drawBBoxes(imageUrl, facts) {
+            const container = document.getElementById('imageContainer');
+            const img = document.getElementById('previewImage');
+            const noImage = document.getElementById('noImage');
+
+            // Remove old overlays
+            container.querySelectorAll('.bbox-overlay').forEach(el => el.remove());
+
+            if (!imageUrl) {
+                img.classList.add('hidden');
+                noImage.classList.remove('hidden');
+                return;
+            }
+
+            img.src = imageUrl;
+            img.onload = () => {
+                img.classList.remove('hidden');
+                noImage.classList.add('hidden');
+
+                facts.forEach(fact => {
+                    if (fact.source?.bbox) {
+                        const bbox = fact.source.bbox;
+                        const overlay = document.createElement('div');
+                        overlay.className = 'bbox-overlay';
+                        overlay.style.left = (bbox.x * img.width) + 'px';
+                        overlay.style.top = (bbox.y * img.height) + 'px';
+                        overlay.style.width = (bbox.width * img.width) + 'px';
+                        overlay.style.height = (bbox.height * img.height) + 'px';
+                        overlay.title = `${fact.kind}: ${fact.raw_value} (conf: ${(fact.confidence*100).toFixed(0)}%)`;
+                        container.appendChild(overlay);
+                    }
+                });
+            };
+        }
+
+        async function uploadLetter() {
+            const fileInput = document.getElementById('fileInput');
+            const textInput = document.getElementById('textInput');
+            const country = document.getElementById('countrySelect').value;
+            const language = document.getElementById('langSelect').value;
+
+            if (!fileInput.files[0] && !textInput.value.trim()) {
+                alert('Please select a file or paste text');
+                return;
+            }
+
+            clearEvents();
+            document.getElementById('jsonOutput').textContent = '{}';
+            document.getElementById('factList').innerHTML = 'Processing...';
+            setStatus('Uploading...', 'status-reading');
+
+            const formData = new FormData();
+            if (fileInput.files[0]) formData.append('file', fileInput.files[0]);
+            if (textInput.value.trim()) formData.append('text', textInput.value.trim());
+            formData.append('country', country);
+            formData.append('language', language);
+
+            try {
+                const resp = await fetch('/api/letters', {
+                    method: 'POST',
+                    body: formData,
+                });
+                const data = await resp.json();
+                currentLetterId = data.id;
+                setStatus('Reading...', 'status-reading');
+                connectSSE(currentLetterId);
+            } catch (err) {
+                console.error(err);
+                setStatus('Error', 'status-error');
+            }
+        }
+
+        async function runSample(example = 'routine') {
+            clearEvents();
+            document.getElementById('jsonOutput').textContent = '{}';
+            document.getElementById('factList').innerHTML = 'Loading sample...';
+            setStatus('Loading sample...', 'status-reading');
+
+            try {
+                // For mock mode, we use a special endpoint or pass a parameter
+                // Here we'll just call the API with a special flag
+                const resp = await fetch('/api/letters', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        text: `SAMPLE:${example}`,
+                        country: 'XX',
+                        language: 'en',
+                    }),
+                });
+                const data = await resp.json();
+                currentLetterId = data.id;
+                setStatus('Processing sample...', 'status-reading');
+                connectSSE(currentLetterId);
+            } catch (err) {
+                console.error(err);
+                setStatus('Error', 'status-error');
+            }
+        }
+
+        function connectSSE(letterId) {
+            if (eventSource) {
+                eventSource.close();
+            }
+
+            const url = `/api/letters/${letterId}/events`;
+            eventSource = new EventSource(url);
+
+            eventSource.onmessage = (e) => {
+                // Heartbeat
+            };
+
+            eventSource.addEventListener('stage', (e) => {
+                const data = JSON.parse(e.data);
+                addEvent({id: e.lastEventId || 'evt', event: 'stage', data});
+            });
+
+            eventSource.addEventListener('facts', (e) => {
+                const data = JSON.parse(e.data);
+                addEvent({id: e.lastEventId || 'evt', event: 'facts', data});
+                showFacts(data.facts);
+                // Try to load image
+                loadImage(letterId);
+            });
+
+            eventSource.addEventListener('classification', (e) => {
+                const data = JSON.parse(e.data);
+                addEvent({id: e.lastEventId || 'evt', event: 'classification', data});
+            });
+
+            eventSource.addEventListener('deadline', (e) => {
+                const data = JSON.parse(e.data);
+                addEvent({id: e.lastEventId || 'evt', event: 'deadline', data});
+            });
+
+            eventSource.addEventListener('severity', (e) => {
+                const data = JSON.parse(e.data);
+                addEvent({id: e.lastEventId || 'evt', event: 'severity', data});
+            });
+
+            eventSource.addEventListener('verdict', (e) => {
+                const data = JSON.parse(e.data);
+                addEvent({id: e.lastEventId || 'evt', event: 'verdict', data});
+            });
+
+            eventSource.addEventListener('explanation', (e) => {
+                const data = JSON.parse(e.data);
+                addEvent({id: e.lastEventId || 'evt', event: 'explanation', data});
+            });
+
+            eventSource.addEventListener('steps', (e) => {
+                const data = JSON.parse(e.data);
+                addEvent({id: e.lastEventId || 'evt', event: 'steps', data});
+            });
+
+            eventSource.addEventListener('checklist', (e) => {
+                const data = JSON.parse(e.data);
+                addEvent({id: e.lastEventId || 'evt', event: 'checklist', data});
+            });
+
+            eventSource.addEventListener('big_print', (e) => {
+                const data = JSON.parse(e.data);
+                addEvent({id: e.lastEventId || 'evt', event: 'big_print', data});
+            });
+
+            eventSource.addEventListener('warning', (e) => {
+                const data = JSON.parse(e.data);
+                addEvent({id: e.lastEventId || 'evt', event: 'warning', data});
+            });
+
+            eventSource.addEventListener('done', (e) => {
+                const data = JSON.parse(e.data);
+                addEvent({id: e.lastEventId || 'evt', event: 'done', data});
+                document.getElementById('jsonOutput').textContent = JSON.stringify(data, null, 2);
+                setStatus('Ready', 'status-ready');
+                eventSource.close();
+            });
+
+            eventSource.addEventListener('error', (e) => {
+                const data = JSON.parse(e.data);
+                addEvent({id: e.lastEventId || 'evt', event: 'error', data});
+                setStatus('Error', 'status-error');
+                eventSource.close();
+            });
+
+            eventSource.onerror = () => {
+                setStatus('Connection lost', 'status-error');
+                eventSource.close();
+            };
+        }
+
+        async function loadImage(letterId) {
+            try {
+                const resp = await fetch(`/api/letters/${letterId}/image`);
+                if (resp.ok) {
+                    const blob = await resp.blob();
+                    const url = URL.createObjectURL(blob);
+                    // Will be drawn when facts arrive
+                    window.currentImageUrl = url;
+                }
+            } catch (err) {
+                console.log('No image available');
+            }
+        }
+
+        // Check if mock mode
+        fetch('/api/health').then(r => r.json()).then(h => {
+            if (h.engine_mode === 'mock') {
+                document.getElementById('btnSample').textContent = 'Run Sample (mock mode)';
+            }
+        });
+    </script>
+</body>
+</html>

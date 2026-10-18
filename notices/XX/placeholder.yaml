@@ -1,0 +1,24 @@
+id: "xx_placeholder_notice"
+names: ["Placeholder Notice", "Sample Letter"]
+keywords: ["notice", "letter", "due", "payment", "amount", "date", "reference"]
+sender: "Unknown Sender"
+country: "XX"
+language: "en"
+meaning: "A placeholder notice pack for testing the engine with synthetic letters."
+severity: "routine"
+severity_reason: "Default severity for placeholder pack"
+deadline_rule: "latest_date"
+checklist:
+  - "Original letter"
+  - "Supporting documents"
+reply_templates:
+  en:
+    neutral: "Thank you for the notice. I will review and respond appropriately."
+    polite: "I kindly acknowledge receipt of your notice. I will review the matter and respond within the given timeframe."
+    firm: "I have received your notice. I dispute the claims made and request a formal review."
+mock_simple: "This is a test letter processed with the placeholder notice pack."
+mock_detailed: "The placeholder notice pack is used for testing the engine pipeline. It provides default values for all fields when no specific country pack is available."
+mock_big_print_1: "Test letter"
+mock_big_print_2: "Check original"
+mock_big_print_3: "No real action needed"
+source_urls: []

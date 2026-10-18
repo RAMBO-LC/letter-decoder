@@ -1,0 +1,105 @@
+{
+  "schema_version": "0.1.0",
+  "id": "ex_actsoon_001",
+  "created_at": "2024-11-01T10:00:00Z",
+  "updated_at": "2024-11-01T10:00:05Z",
+  "status": "ready",
+  "facts": [
+    {
+      "id": "fact_1",
+      "kind": "date",
+      "label": "Response deadline",
+      "raw_value": "5 Nov 2024",
+      "normalized_value": "2024-11-05",
+      "confidence": 0.94,
+      "verified": true,
+      "source": {
+        "page": 1,
+        "text": "Reply within 7 days by 5 Nov 2024",
+        "bbox": {"x": 0.1, "y": 0.5, "width": 0.4, "height": 0.04}
+      }
+    },
+    {
+      "id": "fact_2",
+      "kind": "amount",
+      "label": "Penalty amount",
+      "raw_value": "₹10,000",
+      "normalized_value": "10000.00 INR",
+      "confidence": 0.91,
+      "verified": true,
+      "source": {
+        "page": 1,
+        "text": "Penalty: ₹10,000",
+        "bbox": {"x": 0.1, "y": 0.4, "width": 0.25, "height": 0.04}
+      }
+    },
+    {
+      "id": "fact_3",
+      "kind": "reference",
+      "label": "Notice reference",
+      "raw_value": "IT/2024/10/0156",
+      "normalized_value": "IT/2024/10/0156",
+      "confidence": 0.97,
+      "verified": true,
+      "source": {
+        "page": 1,
+        "text": "Ref: IT/2024/10/0156",
+        "bbox": {"x": 0.1, "y": 0.15, "width": 0.3, "height": 0.03}
+      }
+    }
+  ],
+  "classification": {
+    "notice_type_id": "in_income_tax_penalty",
+    "country": "IN",
+    "language": "en",
+    "sender": "Income Tax Department",
+    "confidence": 0.9,
+    "top_candidates": [
+      {"notice_type_id": "in_income_tax_penalty", "confidence": 0.9},
+      {"notice_type_id": "in_income_tax_scrutiny", "confidence": 0.08}
+    ]
+  },
+  "deadline": {
+    "fact_id": "fact_1",
+    "kind": "response",
+    "iso_date": "2024-11-05",
+    "confidence": 0.92
+  },
+  "severity": {
+    "level": "act_soon",
+    "reason": "Penalty notice, response due in 4 days",
+    "confidence": 0.9
+  },
+  "verdict": {
+    "text": "Income Tax Department imposes ₹10,000 penalty. Respond by 5 Nov.",
+    "confidence": 0.91
+  },
+  "explanation": {
+    "simple": "You have an income tax penalty notice for ₹10,000. You must respond by 5 November (4 days from now).",
+    "detailed": "The Income Tax Department has issued a penalty order under Section 271 for ₹10,000. The notice states you have 7 days to respond, with the deadline being 5 November 2024. If you disagree with the penalty, you can file an appeal. If you agree, payment is required."
+  },
+  "steps": [
+    {"id": "step_1", "text": "Read the penalty order carefully", "detail": "Check which section and assessment year", "fact_ids": ["fact_3"]},
+    {"id": "step_2", "text": "Decide: appeal or pay", "detail": "Appeal within 30 days if you disagree", "fact_ids": ["fact_1"]},
+    {"id": "step_3", "text": "Respond by 5 Nov", "detail": "Via e-filing portal or postal reply", "fact_ids": ["fact_1"]}
+  ],
+  "checklist": [
+    {"id": "chk_1", "text": "Income tax return for relevant AY"},
+    {"id": "chk_2", "text": "Supporting documents for appeal (if applicable)"},
+    {"id": "chk_3", "text": "Penalty order copy"}
+  ],
+  "draft_replies": {
+    "neutral": "I have received the penalty order IT/2024/10/0156 dated 29 Oct 2024. I am reviewing the details and will respond by the deadline of 5 November 2024."
+  },
+  "big_print": {
+    "lines": ["₹10,000 penalty", "Reply by 5 Nov", "Act now — 4 days left"]
+  },
+  "clarifying_question": null,
+  "warnings": [],
+  "meta": {
+    "engine_version": "0.1.0",
+    "model": "qwen2.5:7b",
+    "offline": true,
+    "timings_ms": {"preprocess": 110, "extract_text": 920, "extract_facts": 50, "classify": 200, "explain": 2300, "verify": 35, "total": 3615}
+  }
+}

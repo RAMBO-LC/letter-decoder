@@ -1,0 +1,5 @@
+{
+  "code": "unreadable_image",
+  "message": "Could not read the image. It may be corrupted, too dark, or not a valid image file.",
+  "retryable": true
+}

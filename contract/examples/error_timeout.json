@@ -1,0 +1,5 @@
+{
+  "code": "timeout",
+  "message": "Processing took too long. Try a smaller file or check system resources.",
+  "retryable": true
+}

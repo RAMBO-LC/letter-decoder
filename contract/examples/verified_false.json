@@ -1,0 +1,97 @@
+{
+  "schema_version": "0.1.0",
+  "id": "ex_verifiedfalse_001",
+  "created_at": "2024-11-01T10:00:00Z",
+  "updated_at": "2024-11-01T10:00:05Z",
+  "status": "ready",
+  "facts": [
+    {
+      "id": "fact_1",
+      "kind": "date",
+      "label": "Possible deadline",
+      "raw_value": "25 Nov 2024",
+      "normalized_value": "2024-11-25",
+      "confidence": 0.65,
+      "verified": false,
+      "source": {
+        "page": 1,
+        "text": "Reply by 25 Nov",
+        "bbox": {"x": 0.1, "y": 0.5, "width": 0.25, "height": 0.04}
+      }
+    },
+    {
+      "id": "fact_2",
+      "kind": "amount",
+      "label": "Possible fine",
+      "raw_value": "5000",
+      "normalized_value": "5000.00 INR",
+      "confidence": 0.6,
+      "verified": false,
+      "source": {
+        "page": 1,
+        "text": "Fine: 5000",
+        "bbox": {"x": 0.1, "y": 0.4, "width": 0.2, "height": 0.04}
+      }
+    }
+  ],
+  "classification": {
+    "notice_type_id": "in_traffic_challan",
+    "country": "IN",
+    "language": "en",
+    "sender": "Traffic Police",
+    "confidence": 0.7,
+    "top_candidates": [
+      {"notice_type_id": "in_traffic_challan", "confidence": 0.7},
+      {"notice_type_id": "in_municipal_fine", "confidence": 0.2}
+    ]
+  },
+  "deadline": {
+    "fact_id": "fact_1",
+    "kind": "payment",
+    "iso_date": "2024-11-25",
+    "confidence": 0.6
+  },
+  "severity": {
+    "level": "act_soon",
+    "reason": "Possible traffic fine, payment deadline approaching",
+    "confidence": 0.55
+  },
+  "verdict": {
+    "text": "Possible traffic challan for ₹5,000. Verify details on original.",
+    "confidence": 0.58
+  },
+  "explanation": {
+    "simple": "The system detected a possible traffic fine of ₹5,000 with a deadline of 25 November, but the verification step could not confirm these values with high confidence. Please check the original letter.",
+    "detailed": "OCR extracted text suggesting a traffic challan with a fine of ₹5,000 and a reply-by date of 25 November 2024. However, the deterministic verifier could not confirm these values against known patterns with high confidence. The notice type classification is also uncertain (70% traffic challan). You should examine the original letter directly."
+  },
+  "steps": [
+    {"id": "step_1", "text": "Check original letter for exact fine amount", "detail": "Verify ₹5,000 is correct", "fact_ids": ["fact_2"]},
+    {"id": "step_2", "text": "Confirm deadline is 25 Nov", "detail": "Check for any grace period", "fact_ids": ["fact_1"]},
+    {"id": "step_3", "text": "Pay via Parivahan portal if confirmed", "detail": "Or at traffic police office", "fact_ids": []}
+  ],
+  "checklist": [
+    {"id": "chk_1", "text": "Original challan letter"},
+    {"id": "chk_2", "text": "Vehicle registration details"},
+    {"id": "chk_3", "text": "Driving license"}
+  ],
+  "draft_replies": {
+    "neutral": "I have received the challan. I am verifying the details and will take appropriate action by the deadline."
+  },
+  "big_print": {
+    "lines": ["Possible fine ₹5,000", "Check by 25 Nov", "VERIFY ON ORIGINAL"]
+  },
+  "clarifying_question": null,
+  "warnings": [
+    {
+      "code": "verifier_mismatch",
+      "message": "LLM output dates/amounts could not be verified against deterministic extraction",
+      "bbox": null
+    }
+  ],
+  "meta": {
+    "engine_version": "0.1.0",
+    "model": "qwen2.5:7b",
+    "offline": true,
+    "timings_ms": {"preprocess": 120, "extract_text": 900, "extract_facts": 50, "classify": 180, "explain": 2200, "verify": 45, "total": 3495}
+  }
+}

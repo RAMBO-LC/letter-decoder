@@ -1,0 +1,107 @@
+{
+  "schema_version": "0.1.0",
+  "id": "ex_blurry_001",
+  "created_at": "2024-11-01T10:00:00Z",
+  "updated_at": "2024-11-01T10:00:07Z",
+  "status": "ready",
+  "facts": [
+    {
+      "id": "fact_1",
+      "kind": "date",
+      "label": "Possible due date",
+      "raw_value": "12 Nov 2024",
+      "normalized_value": "2024-11-12",
+      "confidence": 0.52,
+      "verified": false,
+      "source": {
+        "page": 1,
+        "text": "...by 12 Nov...",
+        "bbox": {"x": 0.3, "y": 0.5, "width": 0.2, "height": 0.04}
+      }
+    },
+    {
+      "id": "fact_2",
+      "kind": "amount",
+      "label": "Possible amount",
+      "raw_value": "4200",
+      "normalized_value": "4200.00 INR",
+      "confidence": 0.48,
+      "verified": false,
+      "source": {
+        "page": 1,
+        "text": "...4200...",
+        "bbox": {"x": 0.2, "y": 0.45, "width": 0.15, "height": 0.04}
+      }
+    }
+  ],
+  "classification": {
+    "notice_type_id": "unknown",
+    "country": "IN",
+    "language": "en",
+    "sender": "Unknown",
+    "confidence": 0.35,
+    "top_candidates": [
+      {"notice_type_id": "in_gst_notice", "confidence": 0.35},
+      {"notice_type_id": "in_income_tax_notice", "confidence": 0.25},
+      {"notice_type_id": "in_municipal_notice", "confidence": 0.15}
+    ]
+  },
+  "deadline": {
+    "fact_id": "fact_1",
+    "kind": "unknown",
+    "iso_date": "2024-11-12",
+    "confidence": 0.45
+  },
+  "severity": {
+    "level": "unknown",
+    "reason": "Low confidence extraction — cannot determine severity",
+    "confidence": 0.3
+  },
+  "verdict": {
+    "text": "Letter unclear. Possible tax notice for ~₹4,200 around 12 Nov. Please review original.",
+    "confidence": 0.4
+  },
+  "explanation": {
+    "simple": "The letter image is blurry and hard to read. The system detected possible numbers but confidence is low. Please check the original letter yourself.",
+    "detailed": "OCR extraction from this image had low confidence due to blur and poor lighting. Two possible facts were found: a date around 12 November 2024 and an amount around ₹4,200. The notice type could not be determined. You should read the original letter directly or retake the photo with better lighting and focus."
+  },
+  "steps": [
+    {"id": "step_1", "text": "Read the original letter directly", "detail": "Check the exact due date and amount", "fact_ids": ["fact_1", "fact_2"]},
+    {"id": "step_2", "text": "Retake photo if needed", "detail": "Good lighting, flat surface, all text visible", "fact_ids": []},
+    {"id": "step_3", "text": "Contact sender if unsure", "detail": "Use reference number from letter", "fact_ids": []}
+  ],
+  "checklist": [
+    {"id": "chk_1", "text": "Original physical letter"},
+    {"id": "chk_2", "text": "Better photo or scan if possible"}
+  ],
+  "draft_replies": {
+    "neutral": "I received your letter but the copy is unclear. Could you please clarify the exact amount due and deadline?"
+  },
+  "big_print": {
+    "lines": ["Image unclear", "Check original", "~₹4,200? ~12 Nov?"]
+  },
+  "clarifying_question": null,
+  "warnings": [
+    {
+      "code": "low_confidence_date",
+      "message": "Date extracted with low confidence (0.52); verify manually from original",
+      "bbox": {"x": 0.3, "y": 0.5, "width": 0.2, "height": 0.04}
+    },
+    {
+      "code": "low_confidence_amount",
+      "message": "Amount extracted with low confidence (0.48); verify manually from original",
+      "bbox": {"x": 0.2, "y": 0.45, "width": 0.15, "height": 0.04}
+    },
+    {
+      "code": "unreadable_region",
+      "message": "Portions of the letter could not be read due to blur",
+      "bbox": {"x": 0.0, "y": 0.0, "width": 1.0, "height": 1.0}
+    }
+  ],
+  "meta": {
+    "engine_version": "0.1.0",
+    "model": "qwen2.5:7b",
+    "offline": true,
+    "timings_ms": {"preprocess": 200, "extract_text": 1500, "extract_facts": 60, "classify": 150, "explain": 1800, "verify": 25, "total": 3735}
+  }
+}

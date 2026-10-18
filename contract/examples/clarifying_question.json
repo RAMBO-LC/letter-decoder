@@ -1,0 +1,109 @@
+{
+  "schema_version": "0.1.0",
+  "id": "ex_clarify_001",
+  "created_at": "2024-11-01T10:00:00Z",
+  "updated_at": "2024-11-01T10:00:05Z",
+  "status": "ready",
+  "facts": [
+    {
+      "id": "fact_1",
+      "kind": "date",
+      "label": "Due date",
+      "raw_value": "30 Nov 2024",
+      "normalized_value": "2024-11-30",
+      "confidence": 0.9,
+      "verified": true,
+      "source": {
+        "page": 1,
+        "text": "Due by 30 Nov 2024",
+        "bbox": {"x": 0.1, "y": 0.5, "width": 0.3, "height": 0.04}
+      }
+    },
+    {
+      "id": "fact_2",
+      "kind": "amount",
+      "label": "Property tax",
+      "raw_value": "₹18,500",
+      "normalized_value": "18500.00 INR",
+      "confidence": 0.92,
+      "verified": true,
+      "source": {
+        "page": 1,
+        "text": "Property Tax: ₹18,500",
+        "bbox": {"x": 0.1, "y": 0.4, "width": 0.25, "height": 0.04}
+      }
+    },
+    {
+      "id": "fact_3",
+      "kind": "reference",
+      "label": "Assessment number",
+      "raw_value": "PT/2024/WZ/4421",
+      "normalized_value": "PT/2024/WZ/4421",
+      "confidence": 0.97,
+      "verified": true,
+      "source": {
+        "page": 1,
+        "text": "Assessment No: PT/2024/WZ/4421",
+        "bbox": {"x": 0.1, "y": 0.15, "width": 0.3, "height": 0.03}
+      }
+    }
+  ],
+  "classification": {
+    "notice_type_id": "in_property_tax",
+    "country": "IN",
+    "language": "en",
+    "sender": "Municipal Corporation",
+    "confidence": 0.85,
+    "top_candidates": [
+      {"notice_type_id": "in_property_tax", "confidence": 0.85},
+      {"notice_type_id": "in_water_tax", "confidence": 0.1}
+    ]
+  },
+  "deadline": {
+    "fact_id": "fact_1",
+    "kind": "payment",
+    "iso_date": "2024-11-30",
+    "confidence": 0.88
+  },
+  "severity": {
+    "level": "routine",
+    "reason": "Property tax bill, standard payment timeline",
+    "confidence": 0.8
+  },
+  "verdict": {
+    "text": "Municipal Corporation property tax bill for ₹18,500 due 30 Nov.",
+    "confidence": 0.87
+  },
+  "explanation": {
+    "simple": "This is a property tax bill for ₹18,500 due by 30 November. The notice doesn't clearly indicate if this is for you personally or for a property owned by a company/entity you represent.",
+    "detailed": "The Municipal Corporation has issued a property tax demand for Assessment No. PT/2024/WZ/4421 for ₹18,500 due by 30 November 2024. However, the letter doesn't clearly state whether this assessment is in your personal name or a company/entity name. This affects which documents you need and how you should respond."
+  },
+  "steps": [
+    {"id": "step_1", "text": "Confirm: is this for you or a company?", "detail": "Check the name on the assessment", "fact_ids": ["fact_3"]},
+    {"id": "step_2", "text": "Pay ₹18,500 by 30 Nov", "detail": "Online via municipal portal or at ward office", "fact_ids": ["fact_1", "fact_2"]},
+    {"id": "step_3", "text": "Save receipt", "detail": "For property records", "fact_ids": []}
+  ],
+  "checklist": [
+    {"id": "chk_1", "text": "Property ownership documents"},
+    {"id": "chk_2", "text": "Previous property tax receipts"},
+    {"id": "chk_3", "text": "Company registration (if applicable)"}
+  ],
+  "draft_replies": {
+    "neutral": "I have received the property tax demand PT/2024/WZ/4421 for ₹18,500. I will make the payment by 30 November 2024."
+  },
+  "big_print": {
+    "lines": ["Property tax ₹18,500", "Due 30 Nov 2024", "Personal or company?"]
+  },
+  "clarifying_question": {
+    "id": "cq_1",
+    "text": "Is this property tax for you personally or for a company/entity?",
+    "options": ["Me personally", "My company", "Joint ownership", "Not sure"]
+  },
+  "warnings": [],
+  "meta": {
+    "engine_version": "0.1.0",
+    "model": "qwen2.5:7b",
+    "offline": true,
+    "timings_ms": {"preprocess": 110, "extract_text": 850, "extract_facts": 45, "classify": 170, "explain": 2000, "verify": 30, "total": 3205}
+  }
+}
